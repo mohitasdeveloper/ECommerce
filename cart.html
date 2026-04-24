@@ -2,118 +2,237 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Cart - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .cart-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 768px) { .cart-layout { grid-template-columns: 1fr 360px; } }
+
+    .cart-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1.25rem 0; border-bottom: 1px solid var(--color-border); }
+    .cart-item-img { width: 90px; height: 90px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; background: var(--color-bg-secondary); }
+    .cart-item-info { flex-grow: 1; }
+    .cart-item-name { font-weight: 500; margin-bottom: 0.25rem; }
+    .cart-item-variant { font-size: 0.8rem; color: var(--color-text-muted); }
+    .cart-item-price { font-weight: 600; color: var(--color-accent); margin-top: 0.5rem; }
+
+    .qty-stepper { display: flex; align-items: center; border: 1px solid var(--color-border); border-radius: var(--radius-md); width: fit-content; margin-top: 0.75rem; }
+    .qty-stepper button { padding: 0.4rem 0.75rem; font-size: 1rem; line-height: 1; }
+    .qty-stepper span { padding: 0 0.75rem; font-weight: 500; min-width: 2.5rem; text-align: center; }
+
+    .order-summary-card { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; position: sticky; top: 5rem; height: fit-content; }
+    .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; }
+    .summary-total { font-size: 1.25rem; font-weight: 700; border-top: 1px solid var(--color-border); padding-top: 1rem; margin-top: 0.5rem; }
+
+    .coupon-row { display: flex; gap: 0.5rem; margin: 1rem 0; }
+    .coupon-row input { flex-grow: 1; }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="logo">My Store</a>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8">
-    <h1 class="mb-4">Shopping Cart</h1>
+  <main class="container section">
+    <h1 style="margin-bottom: 2rem;">Shopping Cart</h1>
 
-    <div id="cart-container" class="d-flex gap-4" style="flex-wrap: wrap;">
-      <!-- Main Cart Items -->
-      <div style="flex: 2; min-width: 300px;">
+    <div class="cart-layout">
+      <!-- Cart Items -->
+      <div>
         <div id="cart-items">
-          Loading...
+          <p class="text-muted">Loading cart...</p>
         </div>
       </div>
 
       <!-- Order Summary -->
-      <div style="flex: 1; min-width: 300px;">
-        <div class="product-card" style="padding: 1.5rem;">
-          <h3 class="mb-4">Order Summary</h3>
-          <div class="d-flex justify-between mb-2">
+      <div>
+        <div class="order-summary-card">
+          <h3 style="margin-bottom: 1rem;">Order Summary</h3>
+
+          <!-- Coupon -->
+          <div class="coupon-row">
+            <input type="text" id="coupon-input" class="form-control" placeholder="Coupon code" style="font-size:0.875rem;">
+            <button class="btn btn-outline btn-sm" id="apply-coupon-btn" style="white-space:nowrap;">Apply</button>
+          </div>
+          <div id="coupon-message" style="font-size:0.8rem;margin-bottom:0.5rem;"></div>
+
+          <div class="summary-row">
             <span class="text-muted">Subtotal</span>
-            <span class="fw-bold" id="summary-subtotal">₹0</span>
+            <span id="summary-subtotal">₹0</span>
           </div>
-          <div class="d-flex justify-between mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+          <div class="summary-row" id="discount-row" style="display:none;">
+            <span class="text-muted">Discount (<span id="coupon-label"></span>)</span>
+            <span id="summary-discount" style="color:var(--color-success);">-₹0</span>
+          </div>
+          <div class="summary-row">
             <span class="text-muted">Shipping</span>
-            <span class="fw-bold">Calculated at checkout</span>
+            <span id="summary-shipping">Calculated at checkout</span>
           </div>
-          <div class="d-flex justify-between mb-4" style="font-size: 1.25rem;">
-            <span class="fw-bold">Total</span>
-            <span class="fw-bold" id="summary-total">₹0</span>
+          <div class="summary-row summary-total">
+            <span>Total</span>
+            <span id="summary-total">₹0</span>
           </div>
-          <button class="btn btn-primary btn-block" id="checkout-btn">Proceed to Checkout</button>
+
+          <button class="btn btn-primary btn-block mt-4" id="checkout-btn" style="font-size:1rem;padding:0.9rem;">
+            Proceed to Checkout
+          </button>
+          <a href="./shop.html" class="btn btn-outline btn-block mt-2" style="font-size:0.875rem;">Continue Shopping</a>
         </div>
       </div>
     </div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
-    import { initAuth } from './js/auth.js';
+    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
     import { getCart, updateQuantity, removeFromCart, getCartTotal } from './js/cart.js';
+    import { supabase } from './js/supabase.js';
+    import { showToast } from './js/toast.js';
 
-    async function init() {
-      await initAuth();
-      renderCart();
-      
-      window.addEventListener('cartUpdated', renderCart);
-    }
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
 
-    window.changeQty = function(id, delta) {
-      const cart = getCart();
-      const item = cart.find(i => i.cartItemId === id);
-      if (item) {
-        updateQuantity(id, item.quantity + delta);
-        renderCart();
+    let appliedCoupon = null;
+    let shippingThreshold = 499;
+    let flatCharge = 49;
+
+    async function loadSettings() {
+      const { data: settings } = await supabase.from('settings').select('*');
+      if (settings) {
+        const map = {};
+        settings.forEach(s => map[s.key] = s.value);
+        shippingThreshold = parseFloat(map['free_shipping_threshold'] || 499);
+        flatCharge = parseFloat(map['flat_shipping_charge'] || 49);
       }
-    }
-
-    window.removeItem = function(id) {
-      removeFromCart(id);
-      renderCart();
     }
 
     function renderCart() {
       const cart = getCart();
       const container = document.getElementById('cart-items');
-      
+
       if (cart.length === 0) {
-        container.innerHTML = `<div class="text-center py-8">
-          <p class="text-muted mb-4">Your cart is empty.</p>
-          <a href="./shop.html" class="btn btn-primary">Continue Shopping</a>
-        </div>`;
+        container.innerHTML = `
+          <div class="text-center" style="padding: 4rem 0;">
+            <div style="font-size:4rem;margin-bottom:1rem;">🛒</div>
+            <h3 style="margin-bottom:0.5rem;">Your cart is empty</h3>
+            <p class="text-muted mb-4">Looks like you haven't added anything yet.</p>
+            <a href="./shop.html" class="btn btn-primary">Shop Now</a>
+          </div>`;
         document.getElementById('checkout-btn').disabled = true;
-        document.getElementById('summary-subtotal').textContent = '₹0';
-        document.getElementById('summary-total').textContent = '₹0';
+        updateSummary(0);
         return;
       }
 
       document.getElementById('checkout-btn').disabled = false;
-
       container.innerHTML = cart.map(item => `
-        <div class="d-flex gap-4 align-center mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
-          <img src="${item.image_url}" alt="${item.name}" style="width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm);">
-          <div style="flex-grow: 1;">
-            <h4 style="margin-bottom: 0.25rem;">${item.name}</h4>
-            <div class="text-muted" style="font-size: 0.875rem;">${item.variant_label || ''}</div>
-            <div class="fw-bold mt-2">₹${item.price}</div>
-          </div>
-          <div class="d-flex align-center gap-2">
-            <div class="form-control d-flex align-center p-0" style="width: auto;">
-              <button class="btn btn-sm" onclick="window.changeQty('${item.cartItemId}', -1)">-</button>
-              <span style="width: 30px; text-align: center;">${item.quantity}</span>
-              <button class="btn btn-sm" onclick="window.changeQty('${item.cartItemId}', 1)">+</button>
+        <div class="cart-item">
+          <img src="${item.image_url || 'https://placehold.co/90x90?text=No+Image'}" alt="${item.name}" class="cart-item-img" loading="lazy">
+          <div class="cart-item-info">
+            <div class="cart-item-name">${item.name}</div>
+            ${item.variant_label ? `<div class="cart-item-variant">${item.variant_label}</div>` : ''}
+            <div class="cart-item-price">₹${item.price}</div>
+            <div class="qty-stepper">
+              <button onclick="changeQty('${item.cartItemId}', -1)" aria-label="Decrease">−</button>
+              <span>${item.quantity}</span>
+              <button onclick="changeQty('${item.cartItemId}', 1)" aria-label="Increase">+</button>
             </div>
-            <button class="btn btn-danger btn-sm" onclick="window.removeItem('${item.cartItemId}')">Remove</button>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.5rem;">
+            <span style="font-weight:600;">₹${(item.price * item.quantity).toLocaleString('en-IN')}</span>
+            <button onclick="removeItem('${item.cartItemId}')" style="color:var(--color-danger);font-size:0.8rem;padding:0.25rem 0;" aria-label="Remove">Remove</button>
           </div>
         </div>
       `).join('');
 
-      const total = getCartTotal();
-      document.getElementById('summary-subtotal').textContent = `₹${total}`;
-      document.getElementById('summary-total').textContent = `₹${total}`;
+      updateSummary(getCartTotal());
     }
+
+    function updateSummary(subtotal) {
+      document.getElementById('summary-subtotal').textContent = `₹${subtotal.toLocaleString('en-IN')}`;
+
+      let discount = 0;
+      if (appliedCoupon) {
+        discount = appliedCoupon.discount_type === 'percent'
+          ? (subtotal * appliedCoupon.discount_value) / 100
+          : appliedCoupon.discount_value;
+        document.getElementById('discount-row').style.display = 'flex';
+        document.getElementById('coupon-label').textContent = appliedCoupon.code;
+        document.getElementById('summary-discount').textContent = `-₹${discount.toLocaleString('en-IN')}`;
+      } else {
+        document.getElementById('discount-row').style.display = 'none';
+      }
+
+      const afterDiscount = subtotal - discount;
+      const shipping = subtotal === 0 ? 0 : (afterDiscount >= shippingThreshold ? 0 : flatCharge);
+      document.getElementById('summary-shipping').textContent = subtotal === 0 ? '—' : (shipping === 0 ? 'FREE' : `₹${shipping}`);
+      document.getElementById('summary-total').textContent = `₹${(afterDiscount + shipping).toLocaleString('en-IN')}`;
+    }
+
+    window.changeQty = function(id, delta) {
+      const item = getCart().find(i => i.cartItemId === id);
+      if (item) { updateQuantity(id, item.quantity + delta); renderCart(); }
+    };
+    window.removeItem = function(id) { removeFromCart(id); renderCart(); };
+
+    document.getElementById('apply-coupon-btn').addEventListener('click', async () => {
+      const code = document.getElementById('coupon-input').value.trim().toUpperCase();
+      const msgEl = document.getElementById('coupon-message');
+      if (!code) return;
+
+      const { data: coupon } = await supabase
+        .from('coupons')
+        .select('*')
+        .eq('code', code)
+        .eq('is_active', true)
+        .single();
+
+      if (!coupon) {
+        msgEl.textContent = 'Invalid or expired coupon.';
+        msgEl.style.color = 'var(--color-danger)';
+        appliedCoupon = null;
+        renderCart();
+        return;
+      }
+      if (coupon.expires_at && new Date(coupon.expires_at) < new Date()) {
+        msgEl.textContent = 'This coupon has expired.';
+        msgEl.style.color = 'var(--color-danger)';
+        appliedCoupon = null;
+        renderCart();
+        return;
+      }
+      if (coupon.max_uses && coupon.used_count >= coupon.max_uses) {
+        msgEl.textContent = 'This coupon has reached its usage limit.';
+        msgEl.style.color = 'var(--color-danger)';
+        appliedCoupon = null;
+        renderCart();
+        return;
+      }
+      if (getCartTotal() < coupon.min_order) {
+        msgEl.textContent = `Minimum order ₹${coupon.min_order} required.`;
+        msgEl.style.color = 'var(--color-danger)';
+        appliedCoupon = null;
+        renderCart();
+        return;
+      }
+
+      appliedCoupon = coupon;
+      msgEl.textContent = `✓ Coupon "${code}" applied!`;
+      msgEl.style.color = 'var(--color-success)';
+      showToast('Coupon applied!', 'success');
+      renderCart();
+    });
 
     document.getElementById('checkout-btn').addEventListener('click', () => {
       window.location.href = './checkout.html';
     });
+
+    window.addEventListener('cartUpdated', renderCart);
+
+    async function init() {
+      await initPage();
+      await loadSettings();
+      renderCart();
+    }
 
     init();
   </script>

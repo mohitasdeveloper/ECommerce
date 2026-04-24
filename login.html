@@ -2,70 +2,98 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Login - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .auth-wrapper { min-height: 100vh; display: grid; place-items: center; background: var(--color-bg-secondary); padding: 2rem 1rem; }
+    .auth-card { background: white; border-radius: var(--radius-lg); padding: 2.5rem; width: 100%; max-width: 420px; box-shadow: var(--shadow-md); }
+    .auth-logo { text-align: center; font-size: 1.5rem; font-weight: 700; margin-bottom: 1.75rem; }
+    .auth-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .auth-subtitle { color: var(--color-text-muted); font-size: 0.9rem; margin-bottom: 1.75rem; }
+    .divider { text-align: center; color: var(--color-text-muted); font-size: 0.8rem; margin: 1.25rem 0; }
+    .auth-link { color: var(--color-accent); font-weight: 500; }
+    .auth-link:hover { text-decoration: underline; }
+  </style>
 </head>
 <body>
-  <header class="site-header">
+  <!-- Minimal header -->
+  <div style="position:sticky;top:0;z-index:50;background:white;border-bottom:1px solid var(--color-border);">
     <div class="container header-inner">
       <a href="./" class="logo">My Store</a>
     </div>
-  </header>
+  </div>
 
-  <main class="container py-8" style="max-width: 400px; margin: 0 auto;">
-    <div class="product-card" style="padding: 2rem;">
-      <h2 class="mb-4 text-center">Login</h2>
+  <div id="toast-container-wrap"></div>
+
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo">🛍️</div>
+      <h1 class="auth-title">Welcome back</h1>
+      <p class="auth-subtitle">Sign in to your account to continue</p>
+
       <form id="login-form">
         <div class="form-group">
-          <label class="form-label">Email</label>
-          <input type="email" id="email" class="form-control" required>
+          <label class="form-label" for="email">Email address</label>
+          <input type="email" id="email" class="form-control" required autocomplete="email" placeholder="you@example.com">
         </div>
         <div class="form-group">
-          <label class="form-label">Password</label>
-          <input type="password" id="password" class="form-control" required>
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" class="form-control" required autocomplete="current-password" placeholder="••••••••">
         </div>
-        <button type="submit" class="btn btn-primary btn-block mb-4">Login</button>
+        <div style="text-align:right;margin-bottom:1rem;">
+          <a href="#" id="forgot-btn" class="auth-link" style="font-size:0.85rem;">Forgot password?</a>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block" id="login-btn" style="padding:0.9rem;font-size:1rem;">
+          Sign In
+        </button>
       </form>
-      <div class="text-center text-muted" style="font-size: 0.875rem;">
-        <p class="mb-2"><a href="#" id="forgot-btn">Forgot Password?</a></p>
-        <p>Don't have an account? <a href="./register.html" class="fw-bold" style="color: var(--color-accent);">Register</a></p>
-      </div>
+
+      <div class="divider">— or —</div>
+
+      <p style="text-align:center;font-size:0.9rem;">
+        Don't have an account?
+        <a href="./register.html" class="auth-link">Create account</a>
+      </p>
     </div>
-  </main>
+  </div>
 
   <script type="module">
     import { initAuth, login, resetPassword } from './js/auth.js';
+    import { showToast } from './js/toast.js';
+
+    // Insert toast container
+    document.getElementById('toast-container-wrap').innerHTML = '<div id="toast-container"></div>';
 
     async function init() {
       const { user } = await initAuth();
+      const returnUrl = new URLSearchParams(window.location.search).get('returnUrl') || './account.html';
       if (user) {
-        window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || './account.html';
+        window.location.href = returnUrl;
+        return;
       }
 
       document.getElementById('login-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
+        const email = document.getElementById('email').value.trim();
         const password = document.getElementById('password').value;
-        const btn = e.target.querySelector('button');
+        const btn = document.getElementById('login-btn');
         btn.disabled = true;
-        btn.textContent = 'Logging in...';
-        
+        btn.textContent = 'Signing in...';
+
         const loggedUser = await login(email, password);
         if (loggedUser) {
-          window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || './account.html';
+          window.location.href = returnUrl;
         } else {
           btn.disabled = false;
-          btn.textContent = 'Login';
+          btn.textContent = 'Sign In';
         }
       });
 
       document.getElementById('forgot-btn').addEventListener('click', async (e) => {
         e.preventDefault();
-        const email = document.getElementById('email').value;
-        if (!email) {
-          alert('Please enter your email address first');
-          return;
-        }
+        const email = document.getElementById('email').value.trim();
         await resetPassword(email);
       });
     }

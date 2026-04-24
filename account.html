@@ -2,181 +2,239 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>My Account - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .account-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 768px) { .account-layout { grid-template-columns: 220px 1fr; } }
+    .account-nav { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; height: fit-content; position: sticky; top: 5rem; }
+    .account-nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted); cursor: pointer; transition: all 0.2s; width: 100%; text-align: left; }
+    .account-nav-item:hover { background: var(--color-bg-secondary); color: var(--color-text); }
+    .account-nav-item.active { background: var(--color-accent); color: white; }
+    .panel { display: none; } .panel.active { display: block; }
+    .order-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+    .order-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .address-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; position: relative; }
+    .address-card.default { border-color: var(--color-accent); }
+    .empty-state { text-align: center; padding: 3rem 1rem; }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="/" class="logo">My Store</a>
-      <div class="header-actions">
-        <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
-      </div>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8">
-    <div class="d-flex gap-4" style="flex-wrap: wrap;">
-      
-      <!-- Sidebar -->
-      <aside style="width: 250px; flex-shrink: 0;">
-        <div class="product-card" style="padding: 1.5rem;">
-          <div class="text-center mb-4">
-            <div id="profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--color-bg-secondary); margin: 0 auto 1rem; overflow: hidden;">
-              <!-- Avatar filled by JS -->
-            </div>
-            <div class="fw-bold" id="profile-name">User Name</div>
-            <div class="text-muted text-sm" id="profile-email">user@example.com</div>
+  <main class="container section">
+    <div class="account-layout">
+      <!-- Sidebar Nav -->
+      <nav class="account-nav">
+        <button class="account-nav-item active" data-panel="orders">📦 My Orders</button>
+        <button class="account-nav-item" data-panel="wishlist">❤️ Wishlist</button>
+        <button class="account-nav-item" data-panel="addresses">📍 Addresses</button>
+        <button class="account-nav-item" data-panel="profile">👤 Profile</button>
+        <button class="account-nav-item" id="logout-btn" style="margin-top:1rem;color:var(--color-danger);">🚪 Logout</button>
+      </nav>
+
+      <!-- Panels -->
+      <div>
+        <!-- Orders Panel -->
+        <div class="panel active" id="panel-orders">
+          <h2 style="margin-bottom:1.5rem;">My Orders</h2>
+          <div id="orders-list"><p class="text-muted">Loading orders...</p></div>
+        </div>
+
+        <!-- Wishlist Panel -->
+        <div class="panel" id="panel-wishlist">
+          <h2 style="margin-bottom:1.5rem;">My Wishlist</h2>
+          <div id="wishlist-grid" class="product-grid"></div>
+        </div>
+
+        <!-- Addresses Panel -->
+        <div class="panel" id="panel-addresses">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
+            <h2>My Addresses</h2>
+            <button class="btn btn-primary btn-sm" id="add-address-btn">+ Add Address</button>
           </div>
-          
-          <ul style="border-top: 1px solid var(--color-border); padding-top: 1rem;">
-            <li class="mb-2"><a href="#orders" class="fw-medium text-accent">My Orders</a></li>
-            <li class="mb-2"><a href="#wishlist" class="fw-medium text-accent">Wishlist</a></li>
-            <li class="mb-2"><a href="#profile" class="fw-medium text-accent">Profile Settings</a></li>
-          </ul>
-        </div>
-      </aside>
-
-      <!-- Content -->
-      <section style="flex-grow: 1;">
-        
-        <div id="tab-orders" class="tab-content">
-          <h2 class="mb-4">My Orders</h2>
-          <div id="orders-list">Loading orders...</div>
-        </div>
-
-        <div id="tab-wishlist" class="tab-content" style="display:none;">
-          <h2 class="mb-4">Wishlist</h2>
-          <div id="wishlist-grid" class="product-grid">Loading wishlist...</div>
-        </div>
-
-        <div id="tab-profile" class="tab-content" style="display:none;">
-          <h2 class="mb-4">Profile Settings</h2>
-          <form id="profile-form" class="product-card" style="padding: 2rem;">
-            <div class="form-group">
-              <label class="form-label">Full Name</label>
-              <input type="text" id="edit-name" class="form-control">
+          <div id="addresses-list"></div>
+          <form id="address-form" style="display:none;background:var(--color-bg-secondary);border-radius:var(--radius-lg);padding:1.5rem;margin-top:1rem;">
+            <h3 style="margin-bottom:1rem;">New Address</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+              <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="addr-name" required></div>
+              <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="addr-phone" required></div>
             </div>
-            <div class="form-group">
-              <label class="form-label">Phone Number</label>
-              <input type="text" id="edit-phone" class="form-control">
+            <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-control" id="addr-line1" required></div>
+            <div class="form-group"><label class="form-label">Address Line 2 (Optional)</label><input class="form-control" id="addr-line2"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+              <div class="form-group"><label class="form-label">City</label><input class="form-control" id="addr-city" required></div>
+              <div class="form-group"><label class="form-label">State</label><input class="form-control" id="addr-state" required></div>
+              <div class="form-group"><label class="form-label">Pincode</label><input class="form-control" id="addr-pincode" required></div>
             </div>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <div style="display:flex;gap:1rem;">
+              <button type="submit" class="btn btn-primary">Save Address</button>
+              <button type="button" class="btn btn-outline" id="cancel-address-btn">Cancel</button>
+            </div>
           </form>
         </div>
 
-      </section>
+        <!-- Profile Panel -->
+        <div class="panel" id="panel-profile">
+          <h2 style="margin-bottom:1.5rem;">My Profile</h2>
+          <form id="profile-form" style="max-width:480px;">
+            <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="profile-name" class="form-control"></div>
+            <div class="form-group"><label class="form-label">Email</label><input type="email" id="profile-email" class="form-control" disabled style="opacity:0.6;"></div>
+            <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="profile-phone" class="form-control" placeholder="+91 00000 00000"></div>
+            <button type="submit" class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+          </form>
+        </div>
+      </div>
     </div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
-    import { initAuth, requireAuth, getCurrentUser, getCurrentProfile, logout } from './js/auth.js';
+    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
+    import { logout, requireAuth } from './js/auth.js';
     import { supabase } from './js/supabase.js';
-    import { fetchWishlist, isInWishlist } from './js/wishlist.js';
-    import { renderProductCards } from './js/products.js';
     import { showToast } from './js/toast.js';
+    import { fetchProducts, renderProductCards } from './js/products.js';
+
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
 
     async function init() {
-      await initAuth();
-      requireAuth();
-      await fetchWishlist();
+      const { user, profile } = await initPage();
+      if (!user) { window.location.href = './login.html?returnUrl=./account.html'; return; }
 
-      const user = getCurrentUser();
-      const profile = getCurrentProfile();
+      // Tab navigation
+      document.querySelectorAll('.account-nav-item[data-panel]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.account-nav-item').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+          btn.classList.add('active');
+          document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
+        });
+      });
 
-      document.getElementById('profile-name').textContent = profile?.full_name || 'User';
-      document.getElementById('profile-email').textContent = user.email;
-      
-      document.getElementById('edit-name').value = profile?.full_name || '';
-      document.getElementById('edit-phone').value = profile?.phone || '';
+      // Hash routing
+      const hash = window.location.hash.replace('#', '');
+      if (hash) {
+        const btn = document.querySelector(`[data-panel="${hash}"]`);
+        if (btn) btn.click();
+      }
 
-      document.getElementById('logout-btn').addEventListener('click', logout);
-      
-      // Simple hash-based router
-      window.addEventListener('hashchange', handleRoute);
-      handleRoute();
+      document.getElementById('logout-btn').addEventListener('click', () => logout());
 
-      // Profile Form
+      // Load profile data
+      if (profile) {
+        document.getElementById('profile-name').value = profile.full_name || '';
+        document.getElementById('profile-phone').value = profile.phone || '';
+      }
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (authUser) document.getElementById('profile-email').value = authUser.email || '';
+
       document.getElementById('profile-form').addEventListener('submit', async (e) => {
         e.preventDefault();
-        const btn = e.target.querySelector('button');
-        btn.disabled = true;
-        
+        const btn = document.getElementById('save-profile-btn');
+        btn.disabled = true; btn.textContent = 'Saving...';
         const { error } = await supabase.from('profiles').update({
-          full_name: document.getElementById('edit-name').value,
-          phone: document.getElementById('edit-phone').value
+          full_name: document.getElementById('profile-name').value,
+          phone: document.getElementById('profile-phone').value
         }).eq('id', user.id);
-
-        btn.disabled = false;
-        if (error) showToast(error.message, 'error');
-        else showToast('Profile updated', 'success');
+        btn.disabled = false; btn.textContent = 'Save Changes';
+        if (error) showToast('Error saving profile', 'error');
+        else showToast('Profile updated!', 'success');
       });
-    }
 
-    async function handleRoute() {
-      const hash = window.location.hash || '#orders';
-      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
-      
-      if (hash === '#orders') {
-        document.getElementById('tab-orders').style.display = 'block';
-        await loadOrders();
-      } else if (hash === '#wishlist') {
-        document.getElementById('tab-wishlist').style.display = 'block';
-        await loadWishlist();
-      } else if (hash === '#profile') {
-        document.getElementById('tab-profile').style.display = 'block';
-      }
-    }
-
-    async function loadOrders() {
-      const user = getCurrentUser();
-      const { data } = await supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
-      
-      const container = document.getElementById('orders-list');
-      if (!data || data.length === 0) {
-        container.innerHTML = '<p class="text-muted">You have no orders.</p>';
-        return;
-      }
-
-      container.innerHTML = data.map(o => `
-        <div class="product-card mb-4" style="padding: 1.5rem;">
-          <div class="d-flex justify-between align-center mb-4">
-            <div>
-              <div class="fw-bold">Order #${o.id.split('-')[0].toUpperCase()}</div>
-              <div class="text-muted text-sm">${new Date(o.created_at).toLocaleDateString()}</div>
+      // Orders
+      const { data: orders } = await supabase.from('orders').select(`*, order_items(*, products(name))`).eq('user_id', user.id).order('created_at', { ascending: false });
+      const ordersEl = document.getElementById('orders-list');
+      if (!orders || orders.length === 0) {
+        ordersEl.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>No orders yet</h3><p class="text-muted mb-4">Your orders will appear here</p><a href="./shop.html" class="btn btn-primary">Start Shopping</a></div>`;
+      } else {
+        ordersEl.innerHTML = orders.map(o => `
+          <div class="order-card">
+            <div class="order-header">
+              <div><div style="font-weight:600;font-size:0.85rem;color:var(--color-text-muted);">ORDER #${o.id.substring(0,8).toUpperCase()}</div>
+              <div style="font-size:0.8rem;color:var(--color-text-muted);">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+              <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span>
             </div>
-            <div class="text-right">
-              <div class="fw-bold">₹${o.total}</div>
-              <span class="badge-stock ${o.status === 'delivered' ? 'in-stock' : (o.status === 'cancelled' ? 'out-of-stock' : '')}" style="background:#eee;color:#333;">${o.status.toUpperCase()}</span>
+            <div style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.5rem;">${o.order_items?.length || 0} item(s)</div>
+            <div style="font-weight:700;font-size:1.1rem;">₹${parseFloat(o.total).toLocaleString('en-IN')}</div>
+          </div>
+        `).join('');
+      }
+
+      // Wishlist
+      const { data: wl } = await supabase.from('wishlist').select('product_id, products(*, product_media(url, sort_order))').eq('user_id', user.id);
+      const wlGrid = document.getElementById('wishlist-grid');
+      if (!wl || wl.length === 0) {
+        wlGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">❤️</div><h3>Wishlist is empty</h3><p class="text-muted mb-4">Save items you love for later</p><a href="./shop.html" class="btn btn-primary">Browse Products</a></div>`;
+      } else {
+        const prods = wl.map(w => { const p = w.products; if (!p) return null; p.main_image_url = p.product_media?.sort((a,b)=>a.sort_order-b.sort_order)[0]?.url || 'https://placehold.co/400x500?text=No+Image'; p.hover_image_url = p.main_image_url; return p; }).filter(Boolean);
+        renderProductCards(prods, 'wishlist-grid');
+      }
+
+      // Addresses
+      async function loadAddresses() {
+        const { data: addrs } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false });
+        const el = document.getElementById('addresses-list');
+        if (!addrs || addrs.length === 0) {
+          el.innerHTML = `<p class="text-muted">No saved addresses. Add one below.</p>`;
+          return;
+        }
+        el.innerHTML = addrs.map(a => `
+          <div class="address-card ${a.is_default ? 'default' : ''}" style="margin-bottom:1rem;">
+            ${a.is_default ? '<span style="font-size:0.72rem;color:var(--color-accent);font-weight:600;">DEFAULT</span>' : ''}
+            <div style="font-weight:600;">${a.name}</div>
+            <div class="text-muted" style="font-size:0.875rem;">${a.line1}${a.line2 ? ', ' + a.line2 : ''}, ${a.city}, ${a.state} - ${a.pincode}</div>
+            <div class="text-muted" style="font-size:0.875rem;">📞 ${a.phone}</div>
+            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+              ${!a.is_default ? `<button class="btn btn-outline btn-sm" onclick="setDefault('${a.id}')">Set Default</button>` : ''}
+              <button class="btn btn-outline btn-sm" onclick="deleteAddr('${a.id}')" style="color:var(--color-danger);">Delete</button>
             </div>
           </div>
-          <a href="/order-success.html?order_id=${o.id}" class="btn btn-outline btn-sm">View Details</a>
-        </div>
-      `).join('');
-    }
-
-    async function loadWishlist() {
-      const user = getCurrentUser();
-      const { data: wishlistItems } = await supabase.from('wishlist').select('product_id').eq('user_id', user.id);
-      
-      if (!wishlistItems || wishlistItems.length === 0) {
-        document.getElementById('wishlist-grid').innerHTML = '<div class="col-span-full text-muted">Your wishlist is empty.</div>';
-        return;
+        `).join('');
       }
 
-      const productIds = wishlistItems.map(item => item.product_id);
-      const { data: products } = await supabase.from('products')
-        .select('*, category:categories(name, slug), media:product_media(url, type, sort_order)')
-        .in('id', productIds);
-        
-      if (products) {
-        const processed = products.map(p => {
-          p.main_image_url = p.media && p.media.length > 0 ? p.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/400x500';
-          p.hover_image_url = p.main_image_url;
-          return p;
+      window.setDefault = async (id) => {
+        await supabase.from('addresses').update({ is_default: false }).eq('user_id', user.id);
+        await supabase.from('addresses').update({ is_default: true }).eq('id', id);
+        loadAddresses(); showToast('Default address updated', 'success');
+      };
+      window.deleteAddr = async (id) => {
+        await supabase.from('addresses').delete().eq('id', id);
+        loadAddresses(); showToast('Address removed', 'info');
+      };
+
+      document.getElementById('add-address-btn').addEventListener('click', () => {
+        document.getElementById('address-form').style.display = 'block';
+      });
+      document.getElementById('cancel-address-btn').addEventListener('click', () => {
+        document.getElementById('address-form').style.display = 'none';
+      });
+      document.getElementById('address-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const { error } = await supabase.from('addresses').insert({
+          user_id: user.id,
+          name: document.getElementById('addr-name').value,
+          phone: document.getElementById('addr-phone').value,
+          line1: document.getElementById('addr-line1').value,
+          line2: document.getElementById('addr-line2').value,
+          city: document.getElementById('addr-city').value,
+          state: document.getElementById('addr-state').value,
+          pincode: document.getElementById('addr-pincode').value,
+          is_default: false
         });
-        renderProductCards(processed, 'wishlist-grid');
-      }
+        if (error) { showToast('Error saving address', 'error'); return; }
+        document.getElementById('address-form').reset();
+        document.getElementById('address-form').style.display = 'none';
+        showToast('Address saved!', 'success');
+        loadAddresses();
+      });
+
+      loadAddresses();
     }
 
     init();

@@ -2,99 +2,150 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Shop - My Store</title>
+  <meta name="description" content="Browse all products at My Store">
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .shop-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 768px) { .shop-layout { grid-template-columns: 240px 1fr; } }
+
+    .filter-sidebar { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; height: fit-content; position: sticky; top: 5rem; }
+    .filter-title { font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
+    .filter-group { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
+    .filter-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .filter-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.35rem 0; font-size: 0.9rem; }
+    .filter-group input[type="radio"],
+    .filter-group input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height: 16px; }
+
+    .shop-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
+    .filter-toggle-btn { display: none; }
+    @media (max-width: 767px) {
+      .filter-toggle-btn { display: inline-flex; }
+      .filter-sidebar { display: none; }
+      .filter-sidebar.open { display: block; }
+    }
+  </style>
 </head>
 <body>
-  <!-- Simplified Header for brevity in implementation, same as index.html ideally -->
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="logo">My Store</a>
-      <div class="header-actions">
-        <a href="./cart.html" class="action-btn">Cart (<span id="cart-count">0</span>)</a>
-      </div>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8 d-flex gap-4">
-    <!-- Sidebar -->
-    <aside style="width: 250px; flex-shrink: 0;">
-      <h3>Filters</h3>
-      <div class="form-group mt-4">
-        <label class="form-label">Category</label>
-        <div id="category-filters">Loading...</div>
+  <main class="container section">
+    <div class="shop-top">
+      <div>
+        <h1 id="shop-title" style="font-size:1.5rem;margin-bottom:0.25rem;">All Products</h1>
+        <p class="text-muted" id="product-count" style="font-size:0.875rem;"></p>
       </div>
-      <div class="form-group mt-4">
-        <label class="form-label"><input type="checkbox" id="in-stock-filter"> In Stock Only</label>
-      </div>
-    </aside>
-
-    <!-- Product Grid -->
-    <section style="flex-grow: 1;">
-      <div class="d-flex justify-between align-center mb-4">
-        <h2 id="shop-title">All Products</h2>
-        <select id="sort-select" class="form-control" style="width: auto;">
+      <div style="display:flex;gap:1rem;align-items:center;">
+        <button class="btn btn-outline btn-sm filter-toggle-btn" id="filter-toggle-btn">
+          ☰ Filters
+        </button>
+        <select id="sort-select" class="form-control" style="width:auto;font-size:0.875rem;">
           <option value="newest">Newest</option>
           <option value="price_asc">Price: Low to High</option>
           <option value="price_desc">Price: High to Low</option>
         </select>
       </div>
-      
-      <div id="shop-products" class="product-grid">
-        <!-- Skeleton -->
-        <div class="product-card skeleton" style="height: 300px;"></div>
-        <div class="product-card skeleton" style="height: 300px;"></div>
-      </div>
-    </section>
+    </div>
+
+    <div class="shop-layout">
+      <!-- Sidebar Filters -->
+      <aside class="filter-sidebar" id="filter-sidebar">
+        <div class="filter-title">Filters</div>
+
+        <div class="filter-group">
+          <div style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">Category</div>
+          <div id="category-filters">
+            <label><input type="radio" name="category" value=""> All</label>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <div style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">Availability</div>
+          <label><input type="checkbox" id="in-stock-filter"> In Stock Only</label>
+        </div>
+      </aside>
+
+      <!-- Product Grid -->
+      <section>
+        <div id="shop-products" class="product-grid">
+          <div class="product-card skeleton" style="height:340px;"></div>
+          <div class="product-card skeleton" style="height:340px;"></div>
+          <div class="product-card skeleton" style="height:340px;"></div>
+          <div class="product-card skeleton" style="height:340px;"></div>
+        </div>
+        <div class="text-center mt-8" id="load-more-wrap" style="display:none;">
+          <button class="btn btn-outline" id="load-more-btn">Load More</button>
+        </div>
+      </section>
+    </div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
-    import { initAuth } from './js/auth.js';
-    import { fetchWishlist } from './js/wishlist.js';
+    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
     import { fetchProducts, renderProductCards } from './js/products.js';
     import { supabase } from './js/supabase.js';
 
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+
+    const params = new URLSearchParams(window.location.search);
     let currentOptions = {
-      categorySlug: new URLSearchParams(window.location.search).get('category'),
+      categorySlug: params.get('category') || '',
       inStockOnly: false,
       sortBy: 'newest'
     };
 
     async function loadProducts() {
-      document.getElementById('shop-products').innerHTML = '<div class="product-card skeleton" style="height: 300px;"></div><div class="product-card skeleton" style="height: 300px;"></div>';
+      document.getElementById('shop-products').innerHTML = '<div class="product-card skeleton" style="height:340px;"></div>'.repeat(4);
       const products = await fetchProducts(currentOptions);
       renderProductCards(products, 'shop-products');
+      const countEl = document.getElementById('product-count');
+      if (countEl) countEl.textContent = `${products.length} product${products.length !== 1 ? 's' : ''}`;
     }
 
     async function init() {
-      await initAuth();
-      await fetchWishlist();
+      await initPage();
 
-      // Load Categories for filter
-      const { data: categories } = await supabase.from('categories').select('*');
-      if (categories) {
-        document.getElementById('category-filters').innerHTML = categories.map(c => `
-          <div><label><input type="radio" name="category" value="${c.slug}" ${currentOptions.categorySlug === c.slug ? 'checked' : ''}> ${c.name}</label></div>
-        `).join('');
-        document.getElementById('category-filters').innerHTML += `<div><label><input type="radio" name="category" value="" ${!currentOptions.categorySlug ? 'checked' : ''}> All</label></div>`;
-        
-        document.querySelectorAll('input[name="category"]').forEach(radio => {
-          radio.addEventListener('change', (e) => {
+      // Load categories for filter
+      const { data: cats } = await supabase.from('categories').select('*').order('sort_order');
+      if (cats) {
+        const filtersEl = document.getElementById('category-filters');
+        filtersEl.innerHTML = `<label><input type="radio" name="category" value="" ${!currentOptions.categorySlug ? 'checked' : ''}> All</label>` +
+          cats.map(c => `<label><input type="radio" name="category" value="${c.slug}" ${currentOptions.categorySlug === c.slug ? 'checked' : ''}> ${c.name}</label>`).join('');
+
+        filtersEl.querySelectorAll('input[name="category"]').forEach(r => {
+          r.addEventListener('change', e => {
             currentOptions.categorySlug = e.target.value;
+            const titleEl = document.getElementById('shop-title');
+            if (titleEl) titleEl.textContent = e.target.value ? cats.find(c => c.slug === e.target.value)?.name || 'Products' : 'All Products';
             loadProducts();
           });
         });
       }
 
-      document.getElementById('in-stock-filter').addEventListener('change', (e) => {
+      document.getElementById('in-stock-filter').addEventListener('change', e => {
         currentOptions.inStockOnly = e.target.checked;
         loadProducts();
       });
-
-      document.getElementById('sort-select').addEventListener('change', (e) => {
+      document.getElementById('sort-select').addEventListener('change', e => {
         currentOptions.sortBy = e.target.value;
         loadProducts();
       });
+
+      // Mobile filter toggle
+      document.getElementById('filter-toggle-btn').addEventListener('click', () => {
+        document.getElementById('filter-sidebar').classList.toggle('open');
+      });
+
+      // Set initial title from URL
+      if (currentOptions.categorySlug && cats) {
+        const cat = cats.find(c => c.slug === currentOptions.categorySlug);
+        if (cat) document.getElementById('shop-title').textContent = cat.name;
+      }
 
       loadProducts();
     }

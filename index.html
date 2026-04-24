@@ -3,165 +3,143 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Store</title>
+  <title>My Store — Quality You Can Trust</title>
+  <meta name="description" content="Shop the best products at My Store. Electronics, Clothing, Footwear & Accessories.">
   <link rel="stylesheet" href="./css/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
-  <header class="site-header" id="header">
-    <div class="container header-inner">
-      <a href="./" class="logo" id="store-logo">My Store</a>
-      
-      <div class="header-search">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-        <input type="text" placeholder="Search products..." id="search-input">
-      </div>
-
-      <div class="header-actions">
-        <a href="./account.html#wishlist" class="action-btn" aria-label="Wishlist">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
-          <span class="badge" id="wishlist-count" style="display: none;">0</span>
-        </a>
-        <a href="./cart.html" class="action-btn" aria-label="Cart">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
-          <span class="badge" id="cart-count" style="display: none;">0</span>
-        </a>
-        <a href="./login.html" class="action-btn d-flex align-center gap-2" id="account-link">
-          Login
-        </a>
-      </div>
-    </div>
-  </header>
+  <!-- Header injected by JS -->
+  <div id="header-placeholder"></div>
 
   <main>
-    <!-- Hero Slider -->
-    <section class="hero-slider" style="background-color: var(--color-bg-secondary); height: 400px; display: flex; align-items: center; justify-content: center;">
-      <h1 class="text-center">Welcome to My Store</h1>
+    <!-- Hero Banner -->
+    <section class="hero-section" id="hero">
+      <div class="hero-slide active">
+        <div class="hero-content">
+          <p class="hero-label">New Arrivals 2024</p>
+          <h1 class="hero-title">Quality You<br>Can Trust</h1>
+          <p class="hero-subtitle">Discover premium products crafted for everyday excellence.</p>
+          <div class="hero-actions">
+            <a href="./shop.html" class="btn btn-primary" style="padding: 0.9rem 2rem; font-size:1rem;">Shop Now</a>
+            <a href="./about.html" class="btn btn-outline" style="padding: 0.9rem 2rem; font-size:1rem;">Our Story</a>
+          </div>
+        </div>
+        <div class="hero-image-area" style="background: linear-gradient(135deg, #e0e7ff 0%, #f0fdf4 100%); display:flex; align-items:center; justify-content:center; font-size: 8rem;">
+          🛍️
+        </div>
+      </div>
     </section>
 
     <!-- Categories -->
-    <section class="container py-8">
-      <h2 class="text-center mb-4">Shop by Category</h2>
-      <div id="category-grid" class="d-flex gap-4 justify-center" style="overflow-x: auto; padding-bottom: 1rem;">
-        <!-- Filled by JS -->
+    <section class="container section">
+      <div class="section-header">
+        <h2 class="section-title">Shop by Category</h2>
+        <a href="./shop.html" class="section-link">View All →</a>
+      </div>
+      <div id="category-grid" class="category-grid">
+        <!-- Skeletons -->
+        <div class="category-card skeleton" style="height:160px;"></div>
+        <div class="category-card skeleton" style="height:160px;"></div>
+        <div class="category-card skeleton" style="height:160px;"></div>
+        <div class="category-card skeleton" style="height:160px;"></div>
       </div>
     </section>
 
     <!-- Featured Products -->
-    <section class="container py-8">
-      <h2 class="text-center mb-4">Featured Products</h2>
-      <div id="featured-products" class="product-grid">
-        <!-- Skeleton -->
-        <div class="product-card skeleton" style="height: 300px;"></div>
-        <div class="product-card skeleton" style="height: 300px;"></div>
-        <div class="product-card skeleton" style="height: 300px;"></div>
-        <div class="product-card skeleton" style="height: 300px;"></div>
-      </div>
-      <div class="text-center mt-4">
-        <a href="./shop.html" class="btn btn-outline">View All Products</a>
+    <section class="section" style="background: var(--color-bg-secondary);">
+      <div class="container">
+        <div class="section-header">
+          <h2 class="section-title">Featured Products</h2>
+          <a href="./shop.html" class="section-link">View All →</a>
+        </div>
+        <div id="featured-products" class="product-grid">
+          <div class="product-card skeleton" style="height:360px;"></div>
+          <div class="product-card skeleton" style="height:360px;"></div>
+          <div class="product-card skeleton" style="height:360px;"></div>
+          <div class="product-card skeleton" style="height:360px;"></div>
+        </div>
       </div>
     </section>
 
+    <!-- Testimonials -->
+    <section class="container section">
+      <div class="section-header">
+        <h2 class="section-title">What Our Customers Say</h2>
+      </div>
+      <div id="testimonials" class="testimonials-grid">
+        <div class="testimonial-card skeleton" style="height:160px;"></div>
+        <div class="testimonial-card skeleton" style="height:160px;"></div>
+        <div class="testimonial-card skeleton" style="height:160px;"></div>
+      </div>
+    </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div>
-        <h3 class="logo">My Store</h3>
-        <p class="text-muted" id="store-tagline">Quality You Can Trust</p>
-      </div>
-      <div>
-        <h4 class="footer-title">Shop</h4>
-        <ul class="footer-links">
-          <li><a href="./shop.html">All Products</a></li>
-          <li><a href="./faq.html">FAQs</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="footer-title">Company</h4>
-        <ul class="footer-links">
-          <li><a href="./about.html">About Us</a></li>
-          <li><a href="./contact.html">Contact Us</a></li>
-          <li><a href="./blog.html">Blog</a></li>
-        </ul>
-      </div>
-      <div>
-        <h4 class="footer-title">Connect</h4>
-        <ul class="footer-links" id="social-links">
-          <!-- Filled from settings -->
-        </ul>
-      </div>
-    </div>
-    <div class="footer-bottom">
-      &copy; <span id="year"></span> My Store. All rights reserved.
-    </div>
-  </footer>
+  <!-- Footer injected by JS -->
+  <div id="footer-placeholder"></div>
 
-  <a href="#" target="_blank" class="wa-float" id="wa-btn" style="display:none;" aria-label="WhatsApp">
-    <svg width="30" height="30" viewBox="0 0 24 24" fill="currentColor"><path d="M12.031 0C5.385 0 0 5.385 0 12.031c0 2.128.552 4.197 1.6 6.02L.031 24l6.096-1.599A11.963 11.963 0 0 0 12.031 24c6.646 0 12.031-5.385 12.031-12.031S18.677 0 12.031 0zm3.606 17.15c-.15.422-.86 .804-1.189.818-.328.014-.766.177-2.395-.494-1.956-.804-3.21-2.825-3.305-2.952-.095-.127-.788-1.045-.788-1.99 0-.945.49-1.41.666-1.593.176-.183.385-.228.514-.228.13 0 .257.001.365.006.11.004.257-.042.396.29.141.336.48 1.171.523 1.258.043.087.071.189.014.303-.057.114-.087.184-.173.284-.086.1-.186.223-.263.308-.087.095-.178.198-.078.371.1.172.443.714.935 1.155.638.572 1.172.748 1.345.844.173.095.275.08.375-.034.1-.114.43-1.498.545-2.012.115-.514.228-.445.365-.383.137.062.871.411 1.02.486.15.075.25.112.287.174.037.062.037.362-.113.784z"/></svg>
-  </a>
-
-  <!-- Scripts -->
   <script type="module">
-    import { initAuth } from './js/auth.js';
-    import { fetchWishlist } from './js/wishlist.js';
+    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
     import { fetchProducts, renderProductCards } from './js/products.js';
     import { supabase } from './js/supabase.js';
 
-    document.getElementById('year').textContent = new Date().getFullYear();
+    // Inject header & footer
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
 
     async function init() {
-      await initAuth();
-      await fetchWishlist();
+      await initPage();
 
-      // Load featured products
+      // Featured products
       const products = await fetchProducts({ featuredOnly: true });
       renderProductCards(products.slice(0, 4), 'featured-products');
 
-      // Load settings
-      const { data: settings } = await supabase.from('settings').select('*');
-      if (settings) {
-        const storeName = settings.find(s => s.key === 'store_name')?.value || 'My Store';
-        const tagline = settings.find(s => s.key === 'store_tagline')?.value;
-        const waNumber = settings.find(s => s.key === 'whatsapp_number')?.value;
-
-        document.getElementById('store-logo').textContent = storeName;
-        document.title = storeName;
-        if (tagline) document.getElementById('store-tagline').textContent = tagline;
-        
-        if (waNumber) {
-          const waBtn = document.getElementById('wa-btn');
-          waBtn.href = `https://wa.me/${waNumber}`;
-          waBtn.style.display = 'flex';
-        }
-      }
-
-      // Load categories
-      const { data: categories } = await supabase.from('categories').select('*').order('name');
-      if (categories && categories.length > 0) {
-        document.getElementById('category-grid').innerHTML = categories.map(c => `
-          <a href="./shop.html?category=${c.slug}" class="text-center" style="min-width: 120px;">
-            <div style="width: 100px; height: 100px; border-radius: 50%; background: #eee; margin: 0 auto 0.5rem; display:flex; align-items:center; justify-content:center; font-size:2rem;">
-              📦
+      // Categories
+      const { data: cats } = await supabase.from('categories').select('*').order('sort_order');
+      const CATEGORY_EMOJIS = { electronics: '⚡', clothing: '👕', footwear: '👟', accessories: '⌚' };
+      if (cats && cats.length > 0) {
+        document.getElementById('category-grid').innerHTML = cats.map(c => `
+          <a href="./shop.html?category=${c.slug}" class="category-card">
+            <div class="category-img" style="background:linear-gradient(135deg,#e0e7ff,#f0fdf4)">
+              ${c.image_url
+                ? `<img src="${c.image_url}" alt="${c.name}" loading="lazy" style="width:100%;height:100%;object-fit:cover;">`
+                : `<span style="font-size:3rem;">${CATEGORY_EMOJIS[c.slug] || '📦'}</span>`
+              }
             </div>
-            <div class="fw-medium">${c.name}</div>
+            <div class="category-name">${c.name}</div>
           </a>
         `).join('');
+      }
+
+      // Testimonials
+      const { data: reviews } = await supabase
+        .from('reviews')
+        .select('rating, title, body, user_id, profiles(full_name)')
+        .eq('is_approved', true)
+        .order('created_at', { ascending: false })
+        .limit(3);
+
+      const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
+      if (reviews && reviews.length > 0) {
+        document.getElementById('testimonials').innerHTML = reviews.map(r => `
+          <div class="testimonial-card">
+            <div style="color:#f59e0b;font-size:1.1rem;margin-bottom:0.5rem;">${stars(r.rating)}</div>
+            ${r.title ? `<div style="font-weight:600;margin-bottom:0.5rem;">${r.title}</div>` : ''}
+            <p class="text-muted" style="font-size:0.9rem;line-height:1.6;">"${r.body}"</p>
+            <div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">${r.profiles?.full_name || 'Anonymous'}</div>
+          </div>
+        `).join('');
+      } else {
+        document.getElementById('testimonials').innerHTML = `
+          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★★</div><p class="text-muted">"Excellent quality products and fast shipping!"</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Priya S.</div></div>
+          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★★</div><p class="text-muted">"Best online shopping experience I've had."</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Rahul M.</div></div>
+          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★☆</div><p class="text-muted">"Great value for money. Highly recommend!"</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Anjali K.</div></div>
+        `;
       }
     }
 
     init();
-
-    // Sticky header logic
-    window.addEventListener('scroll', () => {
-      const header = document.getElementById('header');
-      if (window.scrollY > 10) {
-        header.classList.add('scrolled');
-      } else {
-        header.classList.remove('scrolled');
-      }
-    });
   </script>
 </body>
 </html>

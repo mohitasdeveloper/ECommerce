@@ -8,7 +8,7 @@
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="/" class="logo">My Store</a>
+      <a href="./" class="logo">My Store</a>
     </div>
   </header>
 
@@ -28,7 +28,7 @@
       </form>
       <div class="text-center text-muted" style="font-size: 0.875rem;">
         <p class="mb-2"><a href="#" id="forgot-btn">Forgot Password?</a></p>
-        <p>Don't have an account? <a href="/register.html" class="fw-bold" style="color: var(--color-accent);">Register</a></p>
+        <p>Don't have an account? <a href="./register.html" class="fw-bold" style="color: var(--color-accent);">Register</a></p>
       </div>
     </div>
   </main>
@@ -39,7 +39,7 @@
     async function init() {
       const { user } = await initAuth();
       if (user) {
-        window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || '/account.html';
+        window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || './account.html';
       }
 
       document.getElementById('login-form').addEventListener('submit', async (e) => {
@@ -52,7 +52,7 @@
         
         const loggedUser = await login(email, password);
         if (loggedUser) {
-          window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || '/account.html';
+          window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || './account.html';
         } else {
           btn.disabled = false;
           btn.textContent = 'Login';

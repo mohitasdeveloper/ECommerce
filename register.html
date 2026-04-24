@@ -8,7 +8,7 @@
 <body>
   <header class="site-header">
     <div class="container header-inner">
-      <a href="/" class="logo">My Store</a>
+      <a href="./" class="logo">My Store</a>
     </div>
   </header>
 
@@ -31,7 +31,7 @@
         <button type="submit" class="btn btn-primary btn-block mb-4">Create Account</button>
       </form>
       <div class="text-center text-muted" style="font-size: 0.875rem;">
-        <p>Already have an account? <a href="/login.html" class="fw-bold" style="color: var(--color-accent);">Login</a></p>
+        <p>Already have an account? <a href="./login.html" class="fw-bold" style="color: var(--color-accent);">Login</a></p>
       </div>
     </div>
   </main>
@@ -42,7 +42,7 @@
     async function init() {
       const { user } = await initAuth();
       if (user) {
-        window.location.href = '/account.html';
+        window.location.href = './account.html';
       }
 
       document.getElementById('register-form').addEventListener('submit', async (e) => {

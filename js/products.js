@@ -72,7 +72,7 @@ export function renderProductCards(products, containerId) {
     
     return `
       <div class="product-card">
-        <a href="/product.html?slug=${product.slug}" class="product-card-img-link">
+        <a href="./product.html?slug=${product.slug}" class="product-card-img-link">
           <div class="product-card-img" onmouseenter="this.querySelector('img').src='${product.hover_image_url}'" onmouseleave="this.querySelector('img').src='${product.main_image_url}'">
             <img src="${product.main_image_url}" alt="${product.name}" loading="lazy">
             <button class="action-btn wishlist-btn absolute top-2 right-2 bg-white" data-id="${product.id}" aria-label="Toggle Wishlist" style="position:absolute; top:8px; right:8px; background:white;">
@@ -82,7 +82,7 @@ export function renderProductCards(products, containerId) {
         </a>
         <div class="product-card-info">
           ${product.category ? `<div class="product-category">${product.category.name}</div>` : ''}
-          <a href="/product.html?slug=${product.slug}"><h3 class="product-title">${product.name}</h3></a>
+          <a href="./product.html?slug=${product.slug}"><h3 class="product-title">${product.name}</h3></a>
           <div class="d-flex align-center justify-between mt-4">
             <div>
               <span class="product-price">₹${product.price}</span>

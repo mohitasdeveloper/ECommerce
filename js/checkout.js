@@ -91,7 +91,7 @@ export async function processCheckout(orderData, couponData) {
           showToast('Payment verification failed. Please contact support.', 'error');
         } else {
           clearCart();
-          window.location.href = `/order-success.html?order_id=${verifyData.order_id}`;
+          window.location.href = `./order-success.html?order_id=${verifyData.order_id}`;
         }
       },
       theme: {

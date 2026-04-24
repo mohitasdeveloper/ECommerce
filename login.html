@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+    </div>
+  </header>
+
+  <main class="container py-8" style="max-width: 400px; margin: 0 auto;">
+    <div class="product-card" style="padding: 2rem;">
+      <h2 class="mb-4 text-center">Login</h2>
+      <form id="login-form">
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mb-4">Login</button>
+      </form>
+      <div class="text-center text-muted" style="font-size: 0.875rem;">
+        <p class="mb-2"><a href="#" id="forgot-btn">Forgot Password?</a></p>
+        <p>Don't have an account? <a href="/register.html" class="fw-bold" style="color: var(--color-accent);">Register</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initAuth, login, resetPassword } from './js/auth.js';
+
+    async function init() {
+      const { user } = await initAuth();
+      if (user) {
+        window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || '/account.html';
+      }
+
+      document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = 'Logging in...';
+        
+        const loggedUser = await login(email, password);
+        if (loggedUser) {
+          window.location.href = new URLSearchParams(window.location.search).get('returnUrl') || '/account.html';
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Login';
+        }
+      });
+
+      document.getElementById('forgot-btn').addEventListener('click', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        if (!email) {
+          alert('Please enter your email address first');
+          return;
+        }
+        await resetPassword(email);
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

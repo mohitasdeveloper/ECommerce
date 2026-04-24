@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin Dashboard - My Store</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Admin Panel</div>
+      <nav class="admin-nav">
+        <a href="index.html" class="active">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="coupons.html">Coupons</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <!-- Main -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 style="font-size: 1.25rem; margin: 0;">Dashboard Overview</h1>
+        <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
+      </header>
+
+      <div class="admin-content">
+        <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-title">Total Orders</div>
+            <div class="metric-value" id="metric-orders">-</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Total Revenue</div>
+            <div class="metric-value" id="metric-revenue">-</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Total Products</div>
+            <div class="metric-value" id="metric-products">-</div>
+          </div>
+        </div>
+        
+        <div class="table-container">
+          <table style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Total</th>
+              </tr>
+            </thead>
+            <tbody id="recent-orders">
+              <tr><td colspan="4">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAuth, logout } from '../js/auth.js';
+    import { checkAdmin } from '../js/admin.js';
+    import { supabase } from '../js/supabase.js';
+
+    async function init() {
+      await initAuth();
+      await checkAdmin();
+
+      document.getElementById('logout-btn').addEventListener('click', logout);
+
+      // Load Metrics
+      const [{ count: productsCount }, { data: orders }] = await Promise.all([
+        supabase.from('products').select('*', { count: 'exact', head: true }),
+        supabase.from('orders').select('*').order('created_at', { ascending: false })
+      ]);
+
+      document.getElementById('metric-products').textContent = productsCount || 0;
+      
+      if (orders) {
+        document.getElementById('metric-orders').textContent = orders.length;
+        const totalRev = orders.reduce((sum, o) => sum + Number(o.total), 0);
+        document.getElementById('metric-revenue').textContent = `₹${totalRev.toFixed(2)}`;
+
+        // Recent Orders
+        const recent = orders.slice(0, 10);
+        document.getElementById('recent-orders').innerHTML = recent.map(o => `
+          <tr>
+            <td>#${o.id.split('-')[0].toUpperCase()}</td>
+            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+            <td><span class="badge-stock" style="background:#eee;color:#333;">${o.status}</span></td>
+            <td class="fw-bold">₹${o.total}</td>
+          </tr>
+        `).join('');
+      } else {
+        document.getElementById('recent-orders').innerHTML = '<tr><td colspan="4">No orders found.</td></tr>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>My Account - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+      <div class="header-actions">
+        <button id="logout-btn" class="btn btn-outline btn-sm">Logout</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="container py-8">
+    <div class="d-flex gap-4" style="flex-wrap: wrap;">
+      
+      <!-- Sidebar -->
+      <aside style="width: 250px; flex-shrink: 0;">
+        <div class="product-card" style="padding: 1.5rem;">
+          <div class="text-center mb-4">
+            <div id="profile-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--color-bg-secondary); margin: 0 auto 1rem; overflow: hidden;">
+              <!-- Avatar filled by JS -->
+            </div>
+            <div class="fw-bold" id="profile-name">User Name</div>
+            <div class="text-muted text-sm" id="profile-email">user@example.com</div>
+          </div>
+          
+          <ul style="border-top: 1px solid var(--color-border); padding-top: 1rem;">
+            <li class="mb-2"><a href="#orders" class="fw-medium text-accent">My Orders</a></li>
+            <li class="mb-2"><a href="#wishlist" class="fw-medium text-accent">Wishlist</a></li>
+            <li class="mb-2"><a href="#profile" class="fw-medium text-accent">Profile Settings</a></li>
+          </ul>
+        </div>
+      </aside>
+
+      <!-- Content -->
+      <section style="flex-grow: 1;">
+        
+        <div id="tab-orders" class="tab-content">
+          <h2 class="mb-4">My Orders</h2>
+          <div id="orders-list">Loading orders...</div>
+        </div>
+
+        <div id="tab-wishlist" class="tab-content" style="display:none;">
+          <h2 class="mb-4">Wishlist</h2>
+          <div id="wishlist-grid" class="product-grid">Loading wishlist...</div>
+        </div>
+
+        <div id="tab-profile" class="tab-content" style="display:none;">
+          <h2 class="mb-4">Profile Settings</h2>
+          <form id="profile-form" class="product-card" style="padding: 2rem;">
+            <div class="form-group">
+              <label class="form-label">Full Name</label>
+              <input type="text" id="edit-name" class="form-control">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Phone Number</label>
+              <input type="text" id="edit-phone" class="form-control">
+            </div>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </form>
+        </div>
+
+      </section>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initAuth, requireAuth, getCurrentUser, getCurrentProfile, logout } from './js/auth.js';
+    import { supabase } from './js/supabase.js';
+    import { fetchWishlist, isInWishlist } from './js/wishlist.js';
+    import { renderProductCards } from './js/products.js';
+    import { showToast } from './js/toast.js';
+
+    async function init() {
+      await initAuth();
+      requireAuth();
+      await fetchWishlist();
+
+      const user = getCurrentUser();
+      const profile = getCurrentProfile();
+
+      document.getElementById('profile-name').textContent = profile?.full_name || 'User';
+      document.getElementById('profile-email').textContent = user.email;
+      
+      document.getElementById('edit-name').value = profile?.full_name || '';
+      document.getElementById('edit-phone').value = profile?.phone || '';
+
+      document.getElementById('logout-btn').addEventListener('click', logout);
+      
+      // Simple hash-based router
+      window.addEventListener('hashchange', handleRoute);
+      handleRoute();
+
+      // Profile Form
+      document.getElementById('profile-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        
+        const { error } = await supabase.from('profiles').update({
+          full_name: document.getElementById('edit-name').value,
+          phone: document.getElementById('edit-phone').value
+        }).eq('id', user.id);
+
+        btn.disabled = false;
+        if (error) showToast(error.message, 'error');
+        else showToast('Profile updated', 'success');
+      });
+    }
+
+    async function handleRoute() {
+      const hash = window.location.hash || '#orders';
+      document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+      
+      if (hash === '#orders') {
+        document.getElementById('tab-orders').style.display = 'block';
+        await loadOrders();
+      } else if (hash === '#wishlist') {
+        document.getElementById('tab-wishlist').style.display = 'block';
+        await loadWishlist();
+      } else if (hash === '#profile') {
+        document.getElementById('tab-profile').style.display = 'block';
+      }
+    }
+
+    async function loadOrders() {
+      const user = getCurrentUser();
+      const { data } = await supabase.from('orders').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      
+      const container = document.getElementById('orders-list');
+      if (!data || data.length === 0) {
+        container.innerHTML = '<p class="text-muted">You have no orders.</p>';
+        return;
+      }
+
+      container.innerHTML = data.map(o => `
+        <div class="product-card mb-4" style="padding: 1.5rem;">
+          <div class="d-flex justify-between align-center mb-4">
+            <div>
+              <div class="fw-bold">Order #${o.id.split('-')[0].toUpperCase()}</div>
+              <div class="text-muted text-sm">${new Date(o.created_at).toLocaleDateString()}</div>
+            </div>
+            <div class="text-right">
+              <div class="fw-bold">₹${o.total}</div>
+              <span class="badge-stock ${o.status === 'delivered' ? 'in-stock' : (o.status === 'cancelled' ? 'out-of-stock' : '')}" style="background:#eee;color:#333;">${o.status.toUpperCase()}</span>
+            </div>
+          </div>
+          <a href="/order-success.html?order_id=${o.id}" class="btn btn-outline btn-sm">View Details</a>
+        </div>
+      `).join('');
+    }
+
+    async function loadWishlist() {
+      const user = getCurrentUser();
+      const { data: wishlistItems } = await supabase.from('wishlist').select('product_id').eq('user_id', user.id);
+      
+      if (!wishlistItems || wishlistItems.length === 0) {
+        document.getElementById('wishlist-grid').innerHTML = '<div class="col-span-full text-muted">Your wishlist is empty.</div>';
+        return;
+      }
+
+      const productIds = wishlistItems.map(item => item.product_id);
+      const { data: products } = await supabase.from('products')
+        .select('*, category:categories(name, slug), media:product_media(url, type, sort_order)')
+        .in('id', productIds);
+        
+      if (products) {
+        const processed = products.map(p => {
+          p.main_image_url = p.media && p.media.length > 0 ? p.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/400x500';
+          p.hover_image_url = p.main_image_url;
+          return p;
+        });
+        renderProductCards(processed, 'wishlist-grid');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

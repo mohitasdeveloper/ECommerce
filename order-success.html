@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Order Success - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+    </div>
+  </header>
+
+  <main class="container py-8 text-center" style="max-width: 600px;">
+    <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 2rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    
+    <h1 class="mb-4">Thank You for Your Order!</h1>
+    <p class="text-muted mb-4">Your order has been placed successfully and is being processed.</p>
+    
+    <div class="product-card" style="padding: 2rem; margin-bottom: 2rem; text-align: left;">
+      <h3 class="mb-2">Order Summary</h3>
+      <p class="text-muted mb-4">Order ID: <span id="order-id" class="fw-bold"></span></p>
+      
+      <div id="order-items" class="mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);"></div>
+      
+      <div class="d-flex justify-between fw-bold" style="font-size: 1.25rem;">
+        <span>Total Paid</span>
+        <span id="order-total"></span>
+      </div>
+    </div>
+    
+    <a href="/shop.html" class="btn btn-primary">Continue Shopping</a>
+    <a href="/account.html" class="btn btn-outline ml-2">View My Orders</a>
+  </main>
+
+  <script type="module">
+    import { initAuth } from './js/auth.js';
+    import { supabase } from './js/supabase.js';
+
+    async function init() {
+      await initAuth();
+      const orderId = new URLSearchParams(window.location.search).get('order_id');
+      if (!orderId) {
+        window.location.href = '/';
+        return;
+      }
+
+      document.getElementById('order-id').textContent = orderId.split('-')[0].toUpperCase();
+
+      const { data: order } = await supabase
+        .from('orders')
+        .select('*, order_items(*)')
+        .eq('id', orderId)
+        .single();
+
+      if (order) {
+        document.getElementById('order-total').textContent = `₹${order.total}`;
+        
+        document.getElementById('order-items').innerHTML = order.order_items.map(item => {
+          const snap = item.product_snapshot || {};
+          return `
+            <div class="d-flex justify-between mb-2">
+              <span>${item.quantity}x ${snap.name || 'Product'} ${snap.variant_label ? `(${snap.variant_label})` : ''}</span>
+              <span class="fw-bold">₹${item.price_at_purchase * item.quantity}</span>
+            </div>
+          `;
+        }).join('');
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

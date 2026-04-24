@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Register - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+    </div>
+  </header>
+
+  <main class="container py-8" style="max-width: 400px; margin: 0 auto;">
+    <div class="product-card" style="padding: 2rem;">
+      <h2 class="mb-4 text-center">Register</h2>
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label">Full Name</label>
+          <input type="text" id="fullname" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email</label>
+          <input type="email" id="email" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Password</label>
+          <input type="password" id="password" class="form-control" required minlength="6">
+        </div>
+        <button type="submit" class="btn btn-primary btn-block mb-4">Create Account</button>
+      </form>
+      <div class="text-center text-muted" style="font-size: 0.875rem;">
+        <p>Already have an account? <a href="/login.html" class="fw-bold" style="color: var(--color-accent);">Login</a></p>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initAuth, register } from './js/auth.js';
+
+    async function init() {
+      const { user } = await initAuth();
+      if (user) {
+        window.location.href = '/account.html';
+      }
+
+      document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const fullname = document.getElementById('fullname').value;
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const btn = e.target.querySelector('button');
+        
+        btn.disabled = true;
+        btn.textContent = 'Registering...';
+        
+        const registeredUser = await register(fullname, email, password);
+        if (registeredUser) {
+          // Stay on page and wait for email confirmation
+        } else {
+          btn.disabled = false;
+          btn.textContent = 'Create Account';
+        }
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>

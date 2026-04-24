@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Product Details - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <style>
+    .product-layout { display: grid; gap: 2rem; grid-template-columns: 1fr; }
+    @media(min-width: 768px) { .product-layout { grid-template-columns: 1fr 1fr; } }
+    .gallery-main { width: 100%; aspect-ratio: 1; background: var(--color-bg-secondary); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1rem; }
+    .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
+    .gallery-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; }
+    .gallery-thumbs img { width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; }
+    .gallery-thumbs img.active { border-color: var(--color-accent); }
+    .option-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: white; margin-right: 0.5rem; margin-bottom: 0.5rem; }
+    .option-btn.selected { border-color: var(--color-accent); background: rgba(37, 99, 235, 0.1); color: var(--color-accent); }
+    .option-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; display: inline-block; cursor: pointer; margin-right: 0.5rem; box-shadow: var(--shadow-sm); }
+    .option-swatch.selected { border-color: var(--color-accent); transform: scale(1.1); }
+  </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+      <div class="header-actions">
+        <a href="/cart.html" class="action-btn">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container py-8" id="product-container">
+    <div class="text-center py-8">Loading product...</div>
+  </main>
+
+  <script type="module">
+    import { initAuth } from './js/auth.js';
+    import { fetchProductDetails, findMatchingVariant } from './js/variants.js';
+    import { addToCart } from './js/cart.js';
+    import { isInWishlist, toggleWishlist, fetchWishlist } from './js/wishlist.js';
+
+    let product = null;
+    let selectionState = {};
+    let currentVariant = null;
+
+    async function init() {
+      await initAuth();
+      await fetchWishlist();
+
+      const slug = new URLSearchParams(window.location.search).get('slug');
+      if (!slug) {
+        document.getElementById('product-container').innerHTML = 'Product not found.';
+        return;
+      }
+
+      product = await fetchProductDetails(slug);
+      if (!product) {
+        document.getElementById('product-container').innerHTML = 'Product not found.';
+        return;
+      }
+
+      renderProduct();
+    }
+
+    function renderProduct() {
+      const isWished = isInWishlist(product.id);
+      
+      let mainMedia = product.media && product.media.length > 0 ? product.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/800x800';
+
+      let html = `
+        <div class="product-layout">
+          <!-- Gallery -->
+          <div>
+            <div class="gallery-main"><img id="main-img" src="${mainMedia}" alt="${product.name}"></div>
+            <div class="gallery-thumbs">
+              ${(product.media || []).sort((a,b)=>a.sort_order-b.sort_order).map((m, i) => `
+                <img src="${m.url}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${m.url}', this)">
+              `).join('')}
+            </div>
+          </div>
+
+          <!-- Info -->
+          <div>
+            <div class="product-category">${product.category ? product.category.name : ''}</div>
+            <h1 style="margin-bottom: 0.5rem;">${product.name}</h1>
+            
+            <div class="d-flex align-center gap-4 mb-4" style="font-size: 1.5rem;">
+              <span class="fw-bold" id="display-price">₹${product.price}</span>
+              ${product.compare_price ? `<span class="compare-price text-muted" id="display-compare" style="font-size: 1.25rem;">₹${product.compare_price}</span>` : '<span class="compare-price text-muted" id="display-compare" style="font-size: 1.25rem;"></span>'}
+              <span class="badge-stock ${product.stock_status === 'in_stock' ? 'in-stock' : 'out-of-stock'}" id="display-stock">${product.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}</span>
+            </div>
+
+            <!-- Options -->
+            <div id="options-container" class="mb-4">
+              ${renderOptions(product.option_types)}
+            </div>
+
+            <div class="d-flex gap-4 align-center mb-4">
+              <div class="form-control" style="width: 100px; display:flex;">
+                <button type="button" onclick="document.getElementById('qty').stepDown()" style="padding: 0 0.5rem;">-</button>
+                <input type="number" id="qty" value="1" min="1" style="width: 100%; border:none; text-align:center; outline:none;">
+                <button type="button" onclick="document.getElementById('qty').stepUp()" style="padding: 0 0.5rem;">+</button>
+              </div>
+              <button class="btn btn-primary" id="add-to-cart-btn" style="flex-grow:1;">Add to Cart</button>
+              <button class="btn btn-outline" id="wishlist-btn" aria-label="Wishlist" style="padding: 0.75rem;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="${isWished ? 'var(--color-danger)' : 'none'}" stroke="${isWished ? 'var(--color-danger)' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
+              </button>
+            </div>
+
+            <div class="mt-8">
+              <h3>Description</h3>
+              <p class="text-muted" style="white-space: pre-wrap;">${product.description || ''}</p>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('product-container').innerHTML = html;
+
+      // Attach option listeners
+      if (product.option_types) {
+        product.option_types.forEach(ot => {
+          if (ot.display_type === 'dropdown') {
+            document.getElementById(`select-${ot.id}`).addEventListener('change', (e) => {
+              selectionState[ot.id] = e.target.value;
+              updateVariantDisplay();
+            });
+          }
+        });
+      }
+
+      document.getElementById('add-to-cart-btn').addEventListener('click', handleAddToCart);
+      document.getElementById('wishlist-btn').addEventListener('click', async (e) => {
+        const isNowWished = await toggleWishlist(product.id);
+        const svg = document.querySelector('#wishlist-btn svg');
+        if (isNowWished) {
+          svg.setAttribute('fill', 'var(--color-danger)');
+          svg.setAttribute('stroke', 'var(--color-danger)');
+        } else {
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+        }
+      });
+      
+      updateVariantDisplay(); // Initial check
+    }
+
+    function renderOptions(optionTypes) {
+      if (!optionTypes || optionTypes.length === 0) return '';
+      
+      return optionTypes.map(ot => {
+        let optionsHtml = '';
+        if (ot.display_type === 'button') {
+          optionsHtml = ot.values.map(v => `<button class="option-btn" onclick="window.selectOption('${ot.id}', '${v.id}')" id="opt-${v.id}">${v.value}</button>`).join('');
+        } else if (ot.display_type === 'swatch') {
+          optionsHtml = ot.values.map(v => `<div class="option-swatch" style="background-color: ${v.color_hex}" title="${v.value}" onclick="window.selectOption('${ot.id}', '${v.id}')" id="opt-${v.id}"></div>`).join('');
+        } else if (ot.display_type === 'dropdown') {
+          optionsHtml = `<select class="form-control" id="select-${ot.id}">
+            <option value="">Select ${ot.name}</option>
+            ${ot.values.map(v => `<option value="${v.id}">${v.value}</option>`).join('')}
+          </select>`;
+        }
+
+        return `
+          <div class="mb-4">
+            <div class="form-label">${ot.name}</div>
+            <div>${optionsHtml}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    window.selectOption = function(typeId, valueId) {
+      selectionState[typeId] = valueId;
+      
+      // Update UI for buttons and swatches
+      const ot = product.option_types.find(o => o.id === typeId);
+      if (ot.display_type !== 'dropdown') {
+        ot.values.forEach(v => {
+          const el = document.getElementById(`opt-${v.id}`);
+          if (el) el.classList.remove('selected');
+        });
+        document.getElementById(`opt-${valueId}`).classList.add('selected');
+      }
+
+      updateVariantDisplay();
+    }
+
+    window.changeImage = function(url, el) {
+      document.getElementById('main-img').src = url;
+      document.querySelectorAll('.gallery-thumbs img').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+    }
+
+    function updateVariantDisplay() {
+      if (!product.option_types || product.option_types.length === 0) return;
+
+      const keysCount = Object.keys(selectionState).length;
+      const addBtn = document.getElementById('add-to-cart-btn');
+
+      if (keysCount < product.option_types.length) {
+        addBtn.disabled = true;
+        addBtn.textContent = 'Select options';
+        return;
+      }
+
+      currentVariant = findMatchingVariant(product, selectionState);
+      
+      const priceEl = document.getElementById('display-price');
+      const compPriceEl = document.getElementById('display-compare');
+      const stockEl = document.getElementById('display-stock');
+
+      if (currentVariant) {
+        priceEl.textContent = `₹${currentVariant.price}`;
+        compPriceEl.textContent = currentVariant.compare_price ? `₹${currentVariant.compare_price}` : '';
+        
+        if (currentVariant.stock_status === 'in_stock') {
+          stockEl.textContent = 'In Stock';
+          stockEl.className = 'badge-stock in-stock';
+          addBtn.disabled = false;
+          addBtn.textContent = 'Add to Cart';
+        } else {
+          stockEl.textContent = 'Out of Stock';
+          stockEl.className = 'badge-stock out-of-stock';
+          addBtn.disabled = true;
+          addBtn.textContent = 'Out of Stock';
+        }
+
+        // Update image if variant has one (placeholder for media mapping)
+      } else {
+        // Combination not found
+        stockEl.textContent = 'Unavailable';
+        stockEl.className = 'badge-stock out-of-stock';
+        addBtn.disabled = true;
+        addBtn.textContent = 'Unavailable';
+      }
+    }
+
+    function handleAddToCart() {
+      const qty = parseInt(document.getElementById('qty').value) || 1;
+      
+      if (product.option_types && product.option_types.length > 0) {
+        if (!currentVariant) return;
+        // Build label
+        const label = product.option_types.map(ot => {
+          const val = ot.values.find(v => v.id === selectionState[ot.id]);
+          return val ? val.value : '';
+        }).join(' / ');
+        
+        currentVariant.label = label;
+        addToCart(product, currentVariant, qty);
+      } else {
+        addToCart(product, null, qty);
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

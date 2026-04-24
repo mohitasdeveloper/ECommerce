@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Checkout - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <!-- Razorpay script -->
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+    </div>
+  </header>
+
+  <main class="container py-8">
+    <h1 class="mb-4">Checkout</h1>
+    
+    <div class="d-flex gap-4" style="flex-wrap: wrap;">
+      
+      <!-- Delivery Details -->
+      <div style="flex: 2; min-width: 300px;">
+        <div class="product-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+          <h2 class="mb-4">Delivery Address</h2>
+          <div id="address-list" class="mb-4 d-flex gap-4" style="flex-wrap:wrap;">
+            Loading addresses...
+          </div>
+          
+          <button class="btn btn-outline" id="show-new-address-btn">+ Add New Address</button>
+          
+          <div id="new-address-form" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
+            <h3 class="mb-4">New Address</h3>
+            <form id="address-form">
+              <div class="form-group"><label class="form-label">Name</label><input type="text" id="addr-name" class="form-control" required></div>
+              <div class="form-group"><label class="form-label">Line 1</label><input type="text" id="addr-line1" class="form-control" required></div>
+              <div class="form-group"><label class="form-label">Line 2</label><input type="text" id="addr-line2" class="form-control"></div>
+              <div class="d-flex gap-4">
+                <div class="form-group" style="flex:1;"><label class="form-label">City</label><input type="text" id="addr-city" class="form-control" required></div>
+                <div class="form-group" style="flex:1;"><label class="form-label">State</label><input type="text" id="addr-state" class="form-control" required></div>
+              </div>
+              <div class="d-flex gap-4">
+                <div class="form-group" style="flex:1;"><label class="form-label">Pincode</label><input type="text" id="addr-pincode" class="form-control" required></div>
+                <div class="form-group" style="flex:1;"><label class="form-label">Phone</label><input type="text" id="addr-phone" class="form-control" required></div>
+              </div>
+              <button type="submit" class="btn btn-primary mt-2">Save Address</button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+      <div style="flex: 1; min-width: 300px;">
+        <div class="product-card" style="padding: 1.5rem;">
+          <h3 class="mb-4">Order Summary</h3>
+          <div id="checkout-items" class="mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+            <!-- Items filled by JS -->
+          </div>
+          
+          <div class="d-flex justify-between mb-2">
+            <span class="text-muted">Subtotal</span>
+            <span class="fw-bold" id="summary-subtotal">₹0</span>
+          </div>
+          <div class="d-flex justify-between mb-2">
+            <span class="text-muted">Shipping</span>
+            <span class="fw-bold" id="summary-shipping">₹0</span>
+          </div>
+          <div class="d-flex justify-between mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+            <span class="text-muted text-success" id="summary-discount-label" style="display:none;">Discount</span>
+            <span class="fw-bold text-success" id="summary-discount" style="display:none;">-₹0</span>
+          </div>
+          
+          <div class="form-group d-flex gap-2 mb-4">
+            <input type="text" id="coupon-code" class="form-control" placeholder="Coupon Code">
+            <button class="btn btn-outline" id="apply-coupon-btn">Apply</button>
+          </div>
+
+          <div class="d-flex justify-between mb-4" style="font-size: 1.25rem;">
+            <span class="fw-bold">Total</span>
+            <span class="fw-bold" id="summary-total">₹0</span>
+          </div>
+          <button class="btn btn-primary btn-block" id="pay-now-btn">Pay Now</button>
+        </div>
+      </div>
+      
+    </div>
+  </main>
+
+  <script type="module">
+    import { supabase } from './js/supabase.js';
+    import { initAuth, requireAuth, getCurrentUser } from './js/auth.js';
+    import { getCart, getCartTotal } from './js/cart.js';
+    import { processCheckout } from './js/checkout.js';
+    import { showToast } from './js/toast.js';
+
+    let addresses = [];
+    let selectedAddressId = null;
+    let couponData = null;
+    let settings = {};
+
+    async function init() {
+      await initAuth();
+      requireAuth();
+      
+      const cart = getCart();
+      if (cart.length === 0) {
+        window.location.href = '/cart.html';
+        return;
+      }
+
+      // Load settings
+      const { data: s } = await supabase.from('settings').select('*');
+      if (s) {
+        s.forEach(row => settings[row.key] = row.value);
+      }
+
+      await loadAddresses();
+      renderOrderSummary();
+
+      document.getElementById('show-new-address-btn').addEventListener('click', () => {
+        document.getElementById('new-address-form').style.display = 'block';
+        document.getElementById('show-new-address-btn').style.display = 'none';
+      });
+
+      document.getElementById('address-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const user = getCurrentUser();
+        const newAddr = {
+          user_id: user.id,
+          name: document.getElementById('addr-name').value,
+          line1: document.getElementById('addr-line1').value,
+          line2: document.getElementById('addr-line2').value,
+          city: document.getElementById('addr-city').value,
+          state: document.getElementById('addr-state').value,
+          pincode: document.getElementById('addr-pincode').value,
+          phone: document.getElementById('addr-phone').value,
+        };
+
+        const { data, error } = await supabase.from('addresses').insert([newAddr]).select();
+        if (!error && data) {
+          showToast('Address saved', 'success');
+          document.getElementById('address-form').reset();
+          document.getElementById('new-address-form').style.display = 'none';
+          document.getElementById('show-new-address-btn').style.display = 'block';
+          await loadAddresses();
+        } else {
+          showToast('Failed to save address', 'error');
+        }
+      });
+
+      document.getElementById('pay-now-btn').addEventListener('click', handlePayNow);
+      document.getElementById('apply-coupon-btn').addEventListener('click', handleCoupon);
+    }
+
+    async function loadAddresses() {
+      const user = getCurrentUser();
+      const { data } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+      addresses = data || [];
+      
+      const container = document.getElementById('address-list');
+      if (addresses.length === 0) {
+        container.innerHTML = '<p class="text-muted">No saved addresses.</p>';
+        document.getElementById('show-new-address-btn').click();
+      } else {
+        selectedAddressId = addresses[0].id;
+        container.innerHTML = addresses.map(a => `
+          <div class="product-card ${a.id === selectedAddressId ? 'selected-addr' : ''}" 
+               style="padding: 1rem; width: 100%; max-width: 300px; cursor: pointer; border: 2px solid ${a.id === selectedAddressId ? 'var(--color-accent)' : 'var(--color-border)'}"
+               onclick="window.selectAddress('${a.id}')" id="addr-card-${a.id}">
+            <div class="fw-bold mb-2">${a.name}</div>
+            <div class="text-muted text-sm">${a.line1}, ${a.line2 ? a.line2+',' : ''}<br>${a.city}, ${a.state} ${a.pincode}<br>${a.phone}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    window.selectAddress = function(id) {
+      selectedAddressId = id;
+      document.querySelectorAll('.selected-addr').forEach(el => {
+        el.classList.remove('selected-addr');
+        el.style.borderColor = 'var(--color-border)';
+      });
+      const card = document.getElementById(`addr-card-${id}`);
+      card.classList.add('selected-addr');
+      card.style.borderColor = 'var(--color-accent)';
+    }
+
+    function renderOrderSummary() {
+      const cart = getCart();
+      const subtotal = getCartTotal();
+      
+      document.getElementById('checkout-items').innerHTML = cart.map(item => `
+        <div class="d-flex justify-between mb-2">
+          <span style="font-size:0.875rem;">${item.quantity}x ${item.name} ${item.variant_label ? `(${item.variant_label})` : ''}</span>
+          <span class="fw-bold">₹${item.price * item.quantity}</span>
+        </div>
+      `).join('');
+
+      document.getElementById('summary-subtotal').textContent = `₹${subtotal}`;
+      
+      let discount = 0;
+      if (couponData) {
+        document.getElementById('summary-discount-label').style.display = 'block';
+        document.getElementById('summary-discount-label').textContent = `Discount (${couponData.code})`;
+        document.getElementById('summary-discount').style.display = 'block';
+        
+        if (couponData.discount_type === 'percent') {
+          discount = (subtotal * couponData.discount_value) / 100;
+        } else {
+          discount = couponData.discount_value;
+        }
+        document.getElementById('summary-discount').textContent = `-₹${discount}`;
+      }
+
+      const shippingThreshold = parseFloat(settings['free_shipping_threshold'] || '499');
+      const flatCharge = parseFloat(settings['flat_shipping_charge'] || '49');
+      const finalSubtotal = subtotal - discount;
+      
+      const shipping = finalSubtotal >= shippingThreshold ? 0 : flatCharge;
+      document.getElementById('summary-shipping').textContent = shipping === 0 ? 'FREE' : `₹${shipping}`;
+      
+      const total = finalSubtotal + shipping;
+      document.getElementById('summary-total').textContent = `₹${total}`;
+    }
+
+    async function handleCoupon() {
+      const code = document.getElementById('coupon-code').value.trim();
+      if (!code) return;
+      
+      const { data, error } = await supabase.from('coupons').select('*').eq('code', code).eq('is_active', true).single();
+      
+      if (error || !data) {
+        showToast('Invalid or expired coupon', 'error');
+        return;
+      }
+      
+      const subtotal = getCartTotal();
+      if (subtotal < data.min_order) {
+        showToast(`Minimum order of ₹${data.min_order} required for this coupon`, 'error');
+        return;
+      }
+      
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        showToast('Coupon has expired', 'error');
+        return;
+      }
+
+      if (data.max_uses && data.used_count >= data.max_uses) {
+         showToast('Coupon usage limit reached', 'error');
+         return;
+      }
+
+      couponData = data;
+      showToast('Coupon applied', 'success');
+      renderOrderSummary();
+    }
+
+    async function handlePayNow() {
+      if (!selectedAddressId) {
+        showToast('Please select a delivery address', 'error');
+        return;
+      }
+      
+      const addr = addresses.find(a => a.id === selectedAddressId);
+      const cart = getCart();
+      
+      const orderData = {
+        shipping_address: addr,
+        items: cart
+      };
+      
+      document.getElementById('pay-now-btn').disabled = true;
+      document.getElementById('pay-now-btn').textContent = 'Processing...';
+      
+      await processCheckout(orderData, couponData);
+      
+      document.getElementById('pay-now-btn').disabled = false;
+      document.getElementById('pay-now-btn').textContent = 'Pay Now';
+    }
+
+    init();
+  </script>
+</body>
+</html>

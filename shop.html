@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Shop - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+<body>
+  <!-- Simplified Header for brevity in implementation, same as index.html ideally -->
+  <header class="site-header">
+    <div class="container header-inner">
+      <a href="/" class="logo">My Store</a>
+      <div class="header-actions">
+        <a href="/cart.html" class="action-btn">Cart (<span id="cart-count">0</span>)</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="container py-8 d-flex gap-4">
+    <!-- Sidebar -->
+    <aside style="width: 250px; flex-shrink: 0;">
+      <h3>Filters</h3>
+      <div class="form-group mt-4">
+        <label class="form-label">Category</label>
+        <div id="category-filters">Loading...</div>
+      </div>
+      <div class="form-group mt-4">
+        <label class="form-label"><input type="checkbox" id="in-stock-filter"> In Stock Only</label>
+      </div>
+    </aside>
+
+    <!-- Product Grid -->
+    <section style="flex-grow: 1;">
+      <div class="d-flex justify-between align-center mb-4">
+        <h2 id="shop-title">All Products</h2>
+        <select id="sort-select" class="form-control" style="width: auto;">
+          <option value="newest">Newest</option>
+          <option value="price_asc">Price: Low to High</option>
+          <option value="price_desc">Price: High to Low</option>
+        </select>
+      </div>
+      
+      <div id="shop-products" class="product-grid">
+        <!-- Skeleton -->
+        <div class="product-card skeleton" style="height: 300px;"></div>
+        <div class="product-card skeleton" style="height: 300px;"></div>
+      </div>
+    </section>
+  </main>
+
+  <script type="module">
+    import { initAuth } from './js/auth.js';
+    import { fetchWishlist } from './js/wishlist.js';
+    import { fetchProducts, renderProductCards } from './js/products.js';
+    import { supabase } from './js/supabase.js';
+
+    let currentOptions = {
+      categorySlug: new URLSearchParams(window.location.search).get('category'),
+      inStockOnly: false,
+      sortBy: 'newest'
+    };
+
+    async function loadProducts() {
+      document.getElementById('shop-products').innerHTML = '<div class="product-card skeleton" style="height: 300px;"></div><div class="product-card skeleton" style="height: 300px;"></div>';
+      const products = await fetchProducts(currentOptions);
+      renderProductCards(products, 'shop-products');
+    }
+
+    async function init() {
+      await initAuth();
+      await fetchWishlist();
+
+      // Load Categories for filter
+      const { data: categories } = await supabase.from('categories').select('*');
+      if (categories) {
+        document.getElementById('category-filters').innerHTML = categories.map(c => `
+          <div><label><input type="radio" name="category" value="${c.slug}" ${currentOptions.categorySlug === c.slug ? 'checked' : ''}> ${c.name}</label></div>
+        `).join('');
+        document.getElementById('category-filters').innerHTML += `<div><label><input type="radio" name="category" value="" ${!currentOptions.categorySlug ? 'checked' : ''}> All</label></div>`;
+        
+        document.querySelectorAll('input[name="category"]').forEach(radio => {
+          radio.addEventListener('change', (e) => {
+            currentOptions.categorySlug = e.target.value;
+            loadProducts();
+          });
+        });
+      }
+
+      document.getElementById('in-stock-filter').addEventListener('change', (e) => {
+        currentOptions.inStockOnly = e.target.checked;
+        loadProducts();
+      });
+
+      document.getElementById('sort-select').addEventListener('change', (e) => {
+        currentOptions.sortBy = e.target.value;
+        loadProducts();
+      });
+
+      loadProducts();
+    }
+
+    init();
+  </script>
+</body>
+</html>

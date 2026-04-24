@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Orders - Admin</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Admin Panel</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html" class="active">Orders</a>
+        <a href="coupons.html">Coupons</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 style="font-size: 1.25rem; margin: 0;">Orders</h1>
+      </header>
+
+      <div class="admin-content">
+        <div class="table-container">
+          <table style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="orders-tbody">
+              <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAuth } from '../js/auth.js';
+    import { checkAdmin } from '../js/admin.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from '../js/toast.js';
+
+    async function init() {
+      await initAuth();
+      await checkAdmin();
+      loadOrders();
+    }
+
+    async function loadOrders() {
+      const { data } = await supabase.from('orders')
+        .select('*, user:profiles(full_name, email)')
+        .order('created_at', { ascending: false });
+
+      const tbody = document.getElementById('orders-tbody');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(o => {
+        const cName = o.user ? o.user.full_name : (o.shipping_address ? o.shipping_address.name : 'Unknown');
+        const cEmail = o.user ? o.user.email : '';
+        
+        let statusColor = '#6b7280';
+        if (o.status === 'confirmed') statusColor = '#2563eb';
+        if (o.status === 'shipped') statusColor = '#d97706';
+        if (o.status === 'delivered') statusColor = '#16a34a';
+        if (o.status === 'cancelled') statusColor = '#dc2626';
+
+        return `
+          <tr>
+            <td class="fw-bold">#${o.id.split('-')[0].toUpperCase()}</td>
+            <td>
+              <div>${cName}</div>
+              <div class="text-muted text-sm">${cEmail}</div>
+            </td>
+            <td>${new Date(o.created_at).toLocaleDateString()}</td>
+            <td class="fw-bold">₹${o.total}</td>
+            <td>
+              <select class="form-control" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-color: ${statusColor}; color: ${statusColor}; font-weight:600;" onchange="window.updateStatus('${o.id}', this.value)">
+                <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
+                <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            </td>
+            <td>
+              <button class="btn btn-outline btn-sm">View</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.updateStatus = async function(id, status) {
+      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+      if (error) {
+        showToast('Error updating status', 'error');
+      } else {
+        showToast('Order status updated', 'success');
+        loadOrders();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

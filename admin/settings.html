@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Settings - Admin</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Admin Panel</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="coupons.html">Coupons</a>
+        <a href="settings.html" class="active">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 style="font-size: 1.25rem; margin: 0;">Store Settings</h1>
+      </header>
+
+      <div class="admin-content" style="max-width: 800px;">
+        <form id="settings-form" class="product-card" style="padding: 2rem;">
+          
+          <h3 class="mb-4">General Info</h3>
+          <div class="form-group">
+            <label class="form-label">Store Name</label>
+            <input type="text" id="set-store_name" class="form-control" data-key="store_name">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Store Tagline</label>
+            <input type="text" id="set-store_tagline" class="form-control" data-key="store_tagline">
+          </div>
+          <div class="form-group">
+            <label class="form-label">WhatsApp Number (with country code, no +)</label>
+            <input type="text" id="set-whatsapp_number" class="form-control" data-key="whatsapp_number">
+          </div>
+
+          <h3 class="mb-4 mt-8 pt-4" style="border-top: 1px solid var(--color-border);">Shipping Rules</h3>
+          <div class="d-flex gap-4">
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Free Shipping Threshold (₹)</label>
+              <input type="number" id="set-free_shipping_threshold" class="form-control" data-key="free_shipping_threshold">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label class="form-label">Flat Shipping Charge (₹)</label>
+              <input type="number" id="set-flat_shipping_charge" class="form-control" data-key="flat_shipping_charge">
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Global Shipping Policy</label>
+            <textarea id="set-global_shipping_policy" class="form-control" rows="3" data-key="global_shipping_policy"></textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Global Return Policy</label>
+            <textarea id="set-global_return_policy" class="form-control" rows="3" data-key="global_return_policy"></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-primary mt-4">Save All Settings</button>
+        </form>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAuth } from '../js/auth.js';
+    import { checkAdmin } from '../js/admin.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from '../js/toast.js';
+
+    async function init() {
+      await initAuth();
+      await checkAdmin();
+      loadSettings();
+
+      document.getElementById('settings-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = e.target.querySelector('button');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const inputs = document.querySelectorAll('#settings-form [data-key]');
+        const updates = Array.from(inputs).map(input => ({
+          key: input.getAttribute('data-key'),
+          value: input.value
+        }));
+
+        try {
+          const { error } = await supabase.from('settings').upsert(updates);
+          if (error) throw error;
+          showToast('Settings saved successfully', 'success');
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Save All Settings';
+        }
+      });
+    }
+
+    async function loadSettings() {
+      const { data } = await supabase.from('settings').select('*');
+      if (data) {
+        data.forEach(row => {
+          const el = document.getElementById(`set-${row.key}`);
+          if (el) el.value = row.value || '';
+        });
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

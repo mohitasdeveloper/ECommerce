@@ -3,8 +3,8 @@ import { showToast } from './toast.js';
 // Setup Cloudinary widget helper
 // Requires Cloudinary JS to be loaded via script tag: <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 
-const cloudName = 'YOUR_CLOUD_NAME'; // To be updated
-const uploadPreset = 'YOUR_UNSIGNED_PRESET'; // To be updated
+const cloudName = 'duy7opouq'; // To be updated
+const uploadPreset = 'Commerce'; // To be updated
 
 export function openUploadWidget(options = {}, onSuccess) {
   if (typeof cloudinary === 'undefined') {

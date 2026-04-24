@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Products - Admin</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/admin.css">
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Admin Panel</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html" class="active">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="coupons.html">Coupons</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 style="font-size: 1.25rem; margin: 0;">Products</h1>
+        <button id="add-product-btn" class="btn btn-primary btn-sm">+ Add Product</button>
+      </header>
+
+      <div class="admin-content">
+        <!-- Products Table -->
+        <div class="table-container">
+          <table style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Product</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Published</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="products-tbody">
+              <tr><td colspan="6">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Add/Edit Product Modal -->
+  <div class="modal-overlay" id="product-modal">
+    <div class="modal-content">
+      <div class="d-flex justify-between align-center mb-4">
+        <h2 id="modal-title">Add Product</h2>
+        <button type="button" id="close-modal-btn" class="btn">✕</button>
+      </div>
+      <form id="product-form">
+        <input type="hidden" id="prod-id">
+        
+        <div class="d-flex gap-4">
+          <div class="form-group" style="flex:2;">
+            <label class="form-label">Name</label>
+            <input type="text" id="prod-name" class="form-control" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Slug</label>
+            <input type="text" id="prod-slug" class="form-control" required>
+          </div>
+        </div>
+
+        <div class="d-flex gap-4">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Price</label>
+            <input type="number" id="prod-price" class="form-control" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Compare Price</label>
+            <input type="number" id="prod-compare" class="form-control">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Category</label>
+            <select id="prod-category" class="form-control">
+              <option value="">Select...</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Description</label>
+          <textarea id="prod-desc" class="form-control" rows="4"></textarea>
+        </div>
+
+        <div class="d-flex gap-4 mb-4">
+          <label class="d-flex align-center gap-2">
+            <span class="toggle"><input type="checkbox" id="prod-stock" checked><span class="toggle-slider"></span></span>
+            In Stock
+          </label>
+          <label class="d-flex align-center gap-2">
+            <span class="toggle"><input type="checkbox" id="prod-featured"><span class="toggle-slider"></span></span>
+            Featured
+          </label>
+          <label class="d-flex align-center gap-2">
+            <span class="toggle"><input type="checkbox" id="prod-published" checked><span class="toggle-slider"></span></span>
+            Published
+          </label>
+        </div>
+
+        <div class="form-group mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+          <label class="form-label">Media (Cloudinary)</label>
+          <button type="button" class="btn btn-outline btn-sm mb-2" id="upload-media-btn">Upload Media</button>
+          <div id="media-preview" class="d-flex gap-2 mt-2" style="flex-wrap: wrap;"></div>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Save Product</button>
+      </form>
+    </div>
+  </div>
+
+  <script type="module">
+    import { initAuth } from '../js/auth.js';
+    import { checkAdmin } from '../js/admin.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from '../js/toast.js';
+    import { openUploadWidget } from '../js/cloudinary.js';
+
+    let uploadedMedia = [];
+
+    async function init() {
+      await initAuth();
+      await checkAdmin();
+      await loadCategories();
+      await loadProducts();
+
+      document.getElementById('add-product-btn').addEventListener('click', () => {
+        document.getElementById('product-form').reset();
+        document.getElementById('prod-id').value = '';
+        uploadedMedia = [];
+        renderMediaPreview();
+        document.getElementById('modal-title').textContent = 'Add Product';
+        document.getElementById('product-modal').classList.add('active');
+      });
+
+      document.getElementById('close-modal-btn').addEventListener('click', () => {
+        document.getElementById('product-modal').classList.remove('active');
+      });
+
+      // Slug auto-generation
+      document.getElementById('prod-name').addEventListener('input', (e) => {
+        if (!document.getElementById('prod-id').value) {
+          const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+          document.getElementById('prod-slug').value = slug;
+        }
+      });
+
+      document.getElementById('upload-media-btn').addEventListener('click', () => {
+        openUploadWidget({}, (result) => {
+          uploadedMedia.push({
+            url: result.url,
+            type: result.type,
+            public_id: result.public_id,
+            sort_order: uploadedMedia.length
+          });
+          renderMediaPreview();
+        });
+      });
+
+      document.getElementById('product-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('prod-id').value;
+        const name = document.getElementById('prod-name').value;
+        const slug = document.getElementById('prod-slug').value;
+        const price = document.getElementById('prod-price').value;
+        const compare = document.getElementById('prod-compare').value || null;
+        const catId = document.getElementById('prod-category').value || null;
+        const desc = document.getElementById('prod-desc').value;
+        const inStock = document.getElementById('prod-stock').checked;
+        const featured = document.getElementById('prod-featured').checked;
+        const published = document.getElementById('prod-published').checked;
+
+        const prodData = {
+          name, slug, description: desc, category_id: catId, price, compare_price: compare,
+          stock_status: inStock ? 'in_stock' : 'out_of_stock',
+          is_featured: featured, is_published: published
+        };
+
+        const btn = e.target.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        try {
+          let productId = id;
+          if (id) {
+            // Update
+            const { error } = await supabase.from('products').update(prodData).eq('id', id);
+            if (error) throw error;
+          } else {
+            // Insert
+            const { data, error } = await supabase.from('products').insert([prodData]).select().single();
+            if (error) throw error;
+            productId = data.id;
+          }
+
+          // Handle Media
+          if (uploadedMedia.length > 0) {
+            // Very naive replacement for simplicity: delete old, insert new
+            await supabase.from('product_media').delete().eq('product_id', productId);
+            const mediaInserts = uploadedMedia.map((m, i) => ({
+              product_id: productId, url: m.url, type: m.type, public_id: m.public_id, sort_order: i
+            }));
+            await supabase.from('product_media').insert(mediaInserts);
+          }
+
+          showToast('Product saved successfully', 'success');
+          document.getElementById('product-modal').classList.remove('active');
+          loadProducts();
+        } catch (error) {
+          showToast(error.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Save Product';
+        }
+      });
+    }
+
+    async function loadCategories() {
+      const { data } = await supabase.from('categories').select('*');
+      if (data) {
+        document.getElementById('prod-category').innerHTML += data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+      }
+    }
+
+    async function loadProducts() {
+      const { data } = await supabase.from('products').select('*, category:categories(name), media:product_media(url)').order('created_at', { ascending: false });
+      const tbody = document.getElementById('products-tbody');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">No products found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(p => {
+        const thumb = p.media && p.media.length > 0 ? `<img src="${p.media[0].url}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : '';
+        return `
+          <tr>
+            <td>
+              <div class="d-flex align-center gap-2">
+                ${thumb}
+                <div>
+                  <div class="fw-bold">${p.name}</div>
+                  <div class="text-muted text-sm">${p.slug}</div>
+                </div>
+              </div>
+            </td>
+            <td>${p.category ? p.category.name : '-'}</td>
+            <td>₹${p.price}</td>
+            <td><span class="badge-stock ${p.stock_status === 'in_stock' ? 'in-stock' : 'out-of-stock'}">${p.stock_status === 'in_stock' ? 'Yes' : 'No'}</span></td>
+            <td><span class="toggle"><input type="checkbox" ${p.is_published ? 'checked' : ''} disabled><span class="toggle-slider"></span></span></td>
+            <td>
+              <button class="btn btn-outline btn-sm" onclick="window.editProduct('${p.id}')">Edit</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    window.editProduct = async function(id) {
+      const { data: p } = await supabase.from('products').select('*, media:product_media(*)').eq('id', id).single();
+      if (!p) return;
+
+      document.getElementById('prod-id').value = p.id;
+      document.getElementById('prod-name').value = p.name;
+      document.getElementById('prod-slug').value = p.slug;
+      document.getElementById('prod-price').value = p.price;
+      document.getElementById('prod-compare').value = p.compare_price || '';
+      document.getElementById('prod-category').value = p.category_id || '';
+      document.getElementById('prod-desc').value = p.description || '';
+      document.getElementById('prod-stock').checked = p.stock_status === 'in_stock';
+      document.getElementById('prod-featured').checked = p.is_featured;
+      document.getElementById('prod-published').checked = p.is_published;
+
+      uploadedMedia = p.media ? [...p.media] : [];
+      renderMediaPreview();
+
+      document.getElementById('modal-title').textContent = 'Edit Product';
+      document.getElementById('product-modal').classList.add('active');
+    }
+
+    window.removeMedia = function(index) {
+      uploadedMedia.splice(index, 1);
+      renderMediaPreview();
+    }
+
+    function renderMediaPreview() {
+      const container = document.getElementById('media-preview');
+      container.innerHTML = uploadedMedia.map((m, i) => `
+        <div style="position:relative; width:80px; height:80px; border-radius:4px; overflow:hidden; border:1px solid #ddd;">
+          <img src="${m.url}" style="width:100%; height:100%; object-fit:cover;">
+          <button type="button" onclick="window.removeMedia(${i})" style="position:absolute; top:2px; right:2px; background:red; color:white; border-radius:50%; width:20px; height:20px; font-size:10px; line-height:20px; text-align:center;">✕</button>
+        </div>
+      `).join('');
+    }
+
+    init();
+  </script>
+</body>
+</html>

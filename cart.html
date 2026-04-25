@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Cart - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -84,13 +84,14 @@
   <div id="footer-placeholder"></div>
 
   <script type="module">
-    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
     import { getCart, updateQuantity, removeFromCart, getCartTotal } from './js/cart.js';
     import { supabase } from './js/supabase.js';
     import { showToast } from './js/toast.js';
 
     document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
     document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
 
     let appliedCoupon = null;
     let shippingThreshold = 499;

@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Shop - My Store</title>
   <meta name="description" content="Browse all products at My Store">
   <link rel="stylesheet" href="./css/main.css">
@@ -85,12 +85,13 @@
   <div id="footer-placeholder"></div>
 
   <script type="module">
-    import { HEADER_HTML, FOOTER_HTML, initPage } from './js/header.js';
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
     import { fetchProducts, renderProductCards } from './js/products.js';
     import { supabase } from './js/supabase.js';
 
     document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
     document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
 
     const params = new URLSearchParams(window.location.search);
     let currentOptions = {

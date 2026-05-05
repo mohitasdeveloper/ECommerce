@@ -16,6 +16,8 @@
         <a href="products.html" class="active">Products</a>
         <a href="orders.html">Orders</a>
         <a href="coupons.html">Coupons</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="blog.html">Blog</a>
         <a href="settings.html">Settings</a>
       </nav>
     </aside>
@@ -27,6 +29,19 @@
       </header>
 
       <div class="admin-content">
+        <!-- Search & Filters -->
+        <div class="d-flex gap-4 mb-4">
+          <input type="text" id="search-products" class="form-control" placeholder="Search by name or slug..." style="flex: 2;">
+          <select id="filter-category" class="form-control" style="flex: 1;">
+            <option value="">All Categories</option>
+          </select>
+          <select id="filter-status" class="form-control" style="flex: 1;">
+            <option value="">All Statuses</option>
+            <option value="published">Published</option>
+            <option value="draft">Draft</option>
+          </select>
+        </div>
+
         <!-- Products Table -->
         <div class="table-container">
           <table style="width: 100%;">
@@ -36,7 +51,7 @@
                 <th>Category</th>
                 <th>Price</th>
                 <th>Stock</th>
-                <th>Published</th>
+                <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
@@ -54,12 +69,14 @@
     <div class="modal-content">
       <div class="d-flex justify-between align-center mb-4">
         <h2 id="modal-title">Add Product</h2>
-        <button type="button" id="close-modal-btn" class="btn">✕</button>
+        <button type="button" id="close-modal-btn" class="btn" style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
       </div>
       <form id="product-form">
         <input type="hidden" id="prod-id">
         
-        <div class="d-flex gap-4">
+        <!-- Basic Info -->
+        <div class="admin-section-title">Basic Information</div>
+        <div class="d-flex gap-4 mb-4">
           <div class="form-group" style="flex:2;">
             <label class="form-label">Name</label>
             <input type="text" id="prod-name" class="form-control" required>
@@ -70,50 +87,125 @@
           </div>
         </div>
 
-        <div class="d-flex gap-4">
+        <div class="d-flex gap-4 mb-4">
           <div class="form-group" style="flex:1;">
-            <label class="form-label">Price</label>
+            <label class="form-label">Price (₹)</label>
             <input type="number" id="prod-price" class="form-control" required>
           </div>
           <div class="form-group" style="flex:1;">
-            <label class="form-label">Compare Price</label>
+            <label class="form-label">Compare Price (₹)</label>
             <input type="number" id="prod-compare" class="form-control">
           </div>
           <div class="form-group" style="flex:1;">
             <label class="form-label">Category</label>
-            <select id="prod-category" class="form-control">
+            <select id="prod-category" class="form-control" required>
               <option value="">Select...</option>
             </select>
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label">Description</label>
-          <textarea id="prod-desc" class="form-control" rows="4"></textarea>
+        <div class="form-group mb-4">
+          <label class="form-label">Description (HTML allowed)</label>
+          <textarea id="prod-desc" class="form-control" rows="3"></textarea>
         </div>
 
-        <div class="d-flex gap-4 mb-4">
+        <div class="d-flex gap-4 mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
           <label class="d-flex align-center gap-2">
             <span class="toggle"><input type="checkbox" id="prod-stock" checked><span class="toggle-slider"></span></span>
-            In Stock
+            <span style="font-weight:500;">In Stock (Base)</span>
           </label>
           <label class="d-flex align-center gap-2">
             <span class="toggle"><input type="checkbox" id="prod-featured"><span class="toggle-slider"></span></span>
-            Featured
+            <span style="font-weight:500;">Featured</span>
           </label>
           <label class="d-flex align-center gap-2">
             <span class="toggle"><input type="checkbox" id="prod-published" checked><span class="toggle-slider"></span></span>
-            Published
+            <span style="font-weight:500;">Published</span>
           </label>
         </div>
 
-        <div class="form-group mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
-          <label class="form-label">Media (Cloudinary)</label>
-          <button type="button" class="btn btn-outline btn-sm mb-2" id="upload-media-btn">Upload Media</button>
-          <div id="media-preview" class="d-flex gap-2 mt-2" style="flex-wrap: wrap;"></div>
+        <!-- Media -->
+        <div class="admin-section-title">Media Gallery</div>
+        <p class="text-muted text-sm mb-3">Drag images to reorder. The first image is the primary product image.</p>
+        <div class="media-grid mb-4 pb-4" id="media-grid" style="border-bottom: 1px solid var(--color-border);">
+          <div class="media-add" id="upload-media-btn">
+            <span style="font-size:1.5rem; margin-bottom:0.25rem;">+</span>
+            <span>Add Media</span>
+          </div>
+          <!-- Uploaded media injected here -->
         </div>
 
-        <button type="submit" class="btn btn-primary">Save Product</button>
+        <!-- Variants System -->
+        <div class="admin-section-title d-flex justify-between align-center">
+          <span>Variants</span>
+          <label class="d-flex align-center gap-2 text-sm" style="font-weight:normal;">
+            <span class="toggle"><input type="checkbox" id="has-variants"><span class="toggle-slider"></span></span>
+            This product has variants
+          </label>
+        </div>
+        <div id="variants-section" style="display:none; background:var(--color-bg-secondary); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--color-border); margin-bottom:1.5rem;">
+          <div class="mb-4">
+            <h4 class="mb-2" style="font-size:1rem;">Option Types</h4>
+            <div id="option-types-container" class="d-flex flex-column gap-3 mb-3"></div>
+            <button type="button" class="btn btn-outline btn-sm" id="add-option-type-btn">+ Add Option Type (e.g. Size, Color)</button>
+          </div>
+          
+          <div id="variants-table-container" style="display:none;">
+            <div class="d-flex justify-between align-center mb-2 mt-4">
+              <h4 style="font-size:1rem; margin:0;">Variant Combinations</h4>
+              <button type="button" class="btn btn-outline btn-sm" id="generate-variants-btn">Generate Combinations</button>
+            </div>
+            <div class="variant-table-wrap">
+              <table style="width:100%;">
+                <thead>
+                  <tr>
+                    <th>Variant</th>
+                    <th>SKU</th>
+                    <th>Price (₹)</th>
+                    <th>Stock</th>
+                    <th>Image</th>
+                  </tr>
+                </thead>
+                <tbody id="variants-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="admin-section-title">Product Details (Tabs)</div>
+        
+        <div class="form-group mb-4">
+          <label class="form-label">Specifications (Key-Value)</label>
+          <div id="specs-container" class="d-flex flex-column gap-2 mb-2"></div>
+          <button type="button" class="btn btn-outline btn-sm" id="add-spec-btn">+ Add Row</button>
+        </div>
+
+        <div class="form-group mb-4">
+          <label class="form-label">Care Instructions (Markdown)</label>
+          <textarea id="detail-care" class="form-control" rows="2"></textarea>
+        </div>
+        
+        <div class="form-group mb-4">
+          <label class="form-label">What's in the Box (Markdown)</label>
+          <textarea id="detail-box" class="form-control" rows="2"></textarea>
+        </div>
+
+        <div class="d-flex gap-4 mb-4">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Custom Shipping Policy</label>
+            <textarea id="detail-shipping" class="form-control" rows="2" placeholder="Leave blank to use global policy"></textarea>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Custom Return Policy</label>
+            <textarea id="detail-return" class="form-control" rows="2" placeholder="Leave blank to use global policy"></textarea>
+          </div>
+        </div>
+
+        <div class="d-flex justify-end gap-3 mt-6 pt-4" style="border-top:1px solid var(--color-border); position:sticky; bottom:0; background:white; padding-bottom:1rem; z-index:10;">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('product-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-product-btn">Save Product</button>
+        </div>
       </form>
     </div>
   </div>
@@ -125,7 +217,14 @@
     import { showToast } from '../js/toast.js';
     import { openUploadWidget } from '../js/cloudinary.js';
 
+    let allProducts = [];
     let uploadedMedia = [];
+    let optionTypes = [];
+    let generatedVariants = [];
+    let specs = [];
+
+    // Drag-and-drop state
+    let draggedMediaIndex = null;
 
     async function init() {
       await initAuth();
@@ -133,20 +232,18 @@
       await loadCategories();
       await loadProducts();
 
-      document.getElementById('add-product-btn').addEventListener('click', () => {
-        document.getElementById('product-form').reset();
-        document.getElementById('prod-id').value = '';
-        uploadedMedia = [];
-        renderMediaPreview();
-        document.getElementById('modal-title').textContent = 'Add Product';
-        document.getElementById('product-modal').classList.add('active');
-      });
+      // Filters
+      document.getElementById('search-products').addEventListener('input', renderProductsTable);
+      document.getElementById('filter-category').addEventListener('change', renderProductsTable);
+      document.getElementById('filter-status').addEventListener('change', renderProductsTable);
 
+      // Modal Triggers
+      document.getElementById('add-product-btn').addEventListener('click', () => openModal());
       document.getElementById('close-modal-btn').addEventListener('click', () => {
         document.getElementById('product-modal').classList.remove('active');
       });
 
-      // Slug auto-generation
+      // Auto Slug
       document.getElementById('prod-name').addEventListener('input', (e) => {
         if (!document.getElementById('prod-id').value) {
           const slug = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
@@ -154,109 +251,104 @@
         }
       });
 
+      // Media Upload
       document.getElementById('upload-media-btn').addEventListener('click', () => {
         openUploadWidget({}, (result) => {
           uploadedMedia.push({
             url: result.url,
             type: result.type,
             public_id: result.public_id,
-            sort_order: uploadedMedia.length
+            id: 'new_' + Math.random().toString(36).substr(2, 9)
           });
-          renderMediaPreview();
+          renderMediaGallery();
         });
       });
 
-      document.getElementById('product-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const id = document.getElementById('prod-id').value;
-        const name = document.getElementById('prod-name').value;
-        const slug = document.getElementById('prod-slug').value;
-        const price = document.getElementById('prod-price').value;
-        const compare = document.getElementById('prod-compare').value || null;
-        const catId = document.getElementById('prod-category').value || null;
-        const desc = document.getElementById('prod-desc').value;
-        const inStock = document.getElementById('prod-stock').checked;
-        const featured = document.getElementById('prod-featured').checked;
-        const published = document.getElementById('prod-published').checked;
-
-        const prodData = {
-          name, slug, description: desc, category_id: catId, price, compare_price: compare,
-          stock_status: inStock ? 'in_stock' : 'out_of_stock',
-          is_featured: featured, is_published: published
-        };
-
-        const btn = e.target.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.textContent = 'Saving...';
-
-        try {
-          let productId = id;
-          if (id) {
-            // Update
-            const { error } = await supabase.from('products').update(prodData).eq('id', id);
-            if (error) throw error;
-          } else {
-            // Insert
-            const { data, error } = await supabase.from('products').insert([prodData]).select().single();
-            if (error) throw error;
-            productId = data.id;
-          }
-
-          // Handle Media
-          if (uploadedMedia.length > 0) {
-            // Very naive replacement for simplicity: delete old, insert new
-            await supabase.from('product_media').delete().eq('product_id', productId);
-            const mediaInserts = uploadedMedia.map((m, i) => ({
-              product_id: productId, url: m.url, type: m.type, public_id: m.public_id, sort_order: i
-            }));
-            await supabase.from('product_media').insert(mediaInserts);
-          }
-
-          showToast('Product saved successfully', 'success');
-          document.getElementById('product-modal').classList.remove('active');
-          loadProducts();
-        } catch (error) {
-          showToast(error.message, 'error');
-        } finally {
-          btn.disabled = false;
-          btn.textContent = 'Save Product';
-        }
+      // Variants Toggle
+      document.getElementById('has-variants').addEventListener('change', (e) => {
+        document.getElementById('variants-section').style.display = e.target.checked ? 'block' : 'none';
+        if (e.target.checked && optionTypes.length === 0) addOptionType();
       });
+
+      // Variant Builder Events
+      document.getElementById('add-option-type-btn').addEventListener('click', addOptionType);
+      document.getElementById('generate-variants-btn').addEventListener('click', generateVariantCombinations);
+
+      // Specs
+      document.getElementById('add-spec-btn').addEventListener('click', () => {
+        specs.push({ key: '', value: '' });
+        renderSpecs();
+      });
+
+      // Form Submit
+      document.getElementById('product-form').addEventListener('submit', saveProduct);
     }
 
+    /* --- DATA LOADING --- */
     async function loadCategories() {
-      const { data } = await supabase.from('categories').select('*');
+      const { data } = await supabase.from('categories').select('*').order('name');
       if (data) {
-        document.getElementById('prod-category').innerHTML += data.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+        const catSelects = [document.getElementById('prod-category'), document.getElementById('filter-category')];
+        catSelects.forEach(sel => {
+          data.forEach(c => {
+            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
+          });
+        });
       }
     }
 
     async function loadProducts() {
-      const { data } = await supabase.from('products').select('*, category:categories(name), media:product_media(url)').order('created_at', { ascending: false });
-      const tbody = document.getElementById('products-tbody');
+      const { data } = await supabase.from('products')
+        .select('*, category:categories(name), media:product_media(url)')
+        .order('created_at', { ascending: false });
       
-      if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">No products found.</td></tr>';
+      if (data) allProducts = data;
+      renderProductsTable();
+    }
+
+    function renderProductsTable() {
+      const tbody = document.getElementById('products-tbody');
+      const q = document.getElementById('search-products').value.toLowerCase();
+      const cat = document.getElementById('filter-category').value;
+      const stat = document.getElementById('filter-status').value;
+
+      let filtered = allProducts.filter(p => {
+        const matchQ = p.name.toLowerCase().includes(q) || p.slug.includes(q);
+        const matchCat = cat ? p.category_id === cat : true;
+        const matchStat = stat ? (stat === 'published' ? p.is_published : !p.is_published) : true;
+        return matchQ && matchCat && matchStat;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:2rem;">No products found.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = data.map(p => {
-        const thumb = p.media && p.media.length > 0 ? `<img src="${p.media[0].url}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : '';
+      tbody.innerHTML = filtered.map(p => {
+        const img = p.media && p.media.length > 0 ? p.media.sort((a,b)=>a.sort_order - b.sort_order)[0].url : 'https://placehold.co/40x40?text=N/A';
         return `
           <tr>
             <td>
-              <div class="d-flex align-center gap-2">
-                ${thumb}
+              <div class="d-flex align-center gap-3">
+                <img src="${img}" style="width:48px;height:48px;object-fit:cover;border-radius:var(--radius-sm);border:1px solid var(--color-border);">
                 <div>
-                  <div class="fw-bold">${p.name}</div>
+                  <div class="fw-bold" style="color:var(--color-accent);">${p.name}</div>
                   <div class="text-muted text-sm">${p.slug}</div>
                 </div>
               </div>
             </td>
-            <td>${p.category ? p.category.name : '-'}</td>
-            <td>₹${p.price}</td>
-            <td><span class="badge-stock ${p.stock_status === 'in_stock' ? 'in-stock' : 'out-of-stock'}">${p.stock_status === 'in_stock' ? 'Yes' : 'No'}</span></td>
-            <td><span class="toggle"><input type="checkbox" ${p.is_published ? 'checked' : ''} disabled><span class="toggle-slider"></span></span></td>
+            <td><span class="badge-stock" style="background:#f3f4f6;color:#374151;">${p.category ? p.category.name : '-'}</span></td>
+            <td class="fw-bold">₹${p.price}</td>
+            <td>
+              <span class="badge-stock ${p.stock_status === 'in_stock' ? 'in-stock' : 'out-of-stock'}">
+                ${p.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}
+              </span>
+            </td>
+            <td>
+              <span class="badge-stock ${p.is_published ? 'in-stock' : 'out-of-stock'}" style="background:${p.is_published ? '#e0e7ff' : '#fee2e2'};color:${p.is_published ? '#4f46e5' : '#dc2626'};">
+                ${p.is_published ? 'Published' : 'Draft'}
+              </span>
+            </td>
             <td>
               <button class="btn btn-outline btn-sm" onclick="window.editProduct('${p.id}')">Edit</button>
             </td>
@@ -265,9 +357,187 @@
       }).join('');
     }
 
+    /* --- MEDIA GALLERY --- */
+    function renderMediaGallery() {
+      // Remove existing items (except the add button)
+      const existing = document.querySelectorAll('.media-item');
+      existing.forEach(e => e.remove());
+
+      const addBtn = document.getElementById('upload-media-btn');
+      
+      uploadedMedia.forEach((m, idx) => {
+        const div = document.createElement('div');
+        div.className = 'media-item';
+        div.draggable = true;
+        div.innerHTML = `
+          ${m.type === 'video' 
+            ? `<video src="${m.url}"></video>` 
+            : `<img src="${m.url}">`
+          }
+          <div class="media-delete" onclick="window.removeMedia(${idx})">✕</div>
+          ${idx === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:var(--color-accent);color:white;text-align:center;font-size:0.7rem;padding:2px;">PRIMARY</div>' : ''}
+        `;
+        
+        // Drag events
+        div.addEventListener('dragstart', (e) => {
+          draggedMediaIndex = idx;
+          e.dataTransfer.effectAllowed = 'move';
+          setTimeout(() => div.style.opacity = '0.5', 0);
+        });
+        div.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; });
+        div.addEventListener('dragenter', (e) => e.preventDefault());
+        div.addEventListener('dragend', () => div.style.opacity = '1');
+        div.addEventListener('drop', (e) => {
+          e.preventDefault();
+          if (draggedMediaIndex !== null && draggedMediaIndex !== idx) {
+            // Swap
+            const temp = uploadedMedia[draggedMediaIndex];
+            uploadedMedia.splice(draggedMediaIndex, 1);
+            uploadedMedia.splice(idx, 0, temp);
+            renderMediaGallery();
+          }
+        });
+
+        // Insert before add button
+        addBtn.parentNode.insertBefore(div, addBtn);
+      });
+
+      renderVariantsTable(); // Update select options if media changes
+    }
+    window.removeMedia = (idx) => { uploadedMedia.splice(idx, 1); renderMediaGallery(); }
+
+    /* --- VARIANTS SYSTEM --- */
+    function addOptionType(data = { id: 'temp_' + Date.now(), name: '', display_type: 'button', values: [''] }) {
+      optionTypes.push(data);
+      renderOptionTypes();
+    }
+    window.removeOptionType = (idx) => { optionTypes.splice(idx, 1); renderOptionTypes(); }
+
+    function renderOptionTypes() {
+      const c = document.getElementById('option-types-container');
+      c.innerHTML = optionTypes.map((ot, i) => `
+        <div style="border:1px solid var(--color-border); padding:1rem; border-radius:var(--radius-sm); background:white;">
+          <div class="d-flex gap-3 mb-3">
+            <input type="text" class="form-control" placeholder="Option Name (e.g. Size)" value="${ot.name}" oninput="optionTypes[${i}].name=this.value" style="flex:2;">
+            <select class="form-control" onchange="optionTypes[${i}].display_type=this.value" style="flex:1;">
+              <option value="button" ${ot.display_type==='button'?'selected':''}>Pill Buttons</option>
+              <option value="swatch" ${ot.display_type==='swatch'?'selected':''}>Color Swatches</option>
+              <option value="dropdown" ${ot.display_type==='dropdown'?'selected':''}>Dropdown</option>
+            </select>
+            <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger);" onclick="window.removeOptionType(${i})">Remove</button>
+          </div>
+          <div class="d-flex flex-wrap gap-2 align-center">
+            <span class="text-sm font-medium">Values:</span>
+            ${ot.values.map((v, j) => `
+              <div class="d-flex align-center" style="border:1px solid #ccc; border-radius:100px; padding-left:12px; overflow:hidden;">
+                <input type="text" value="${v}" oninput="optionTypes[${i}].values[${j}]=this.value" style="border:none; outline:none; width:80px; font-size:0.85rem; padding:6px 0;">
+                ${ot.display_type === 'swatch' ? `<input type="color" value="${ot.colors?.[j] || '#000000'}" onchange="if(!optionTypes[${i}].colors) optionTypes[${i}].colors=[]; optionTypes[${i}].colors[${j}]=this.value" style="width:24px;height:24px;border:none;padding:0;background:none;margin-right:4px;">` : ''}
+                <button type="button" onclick="optionTypes[${i}].values.splice(${j},1); renderOptionTypes();" style="background:var(--color-bg-secondary); border:none; padding:8px 12px; cursor:pointer;">✕</button>
+              </div>
+            `).join('')}
+            <button type="button" class="btn btn-sm btn-outline" style="border-radius:100px;" onclick="optionTypes[${i}].values.push(''); renderOptionTypes();">+ Value</button>
+          </div>
+        </div>
+      `).join('');
+      
+      document.getElementById('variants-table-container').style.display = optionTypes.length > 0 ? 'block' : 'none';
+    }
+
+    function generateVariantCombinations() {
+      // Filter out incomplete types/values
+      const validTypes = optionTypes.filter(ot => ot.name.trim() !== '' && ot.values.some(v => v.trim() !== ''));
+      if(validTypes.length === 0) return;
+
+      const arraysToCombine = validTypes.map(ot => ot.values.filter(v => v.trim() !== '').map(v => ({ typeId: ot.id, typeName: ot.name, value: v })));
+      
+      const combinations = arraysToCombine.reduce((a, b) => a.flatMap(x => b.map(y => [...x, y])), [[]]);
+
+      const basePrice = document.getElementById('prod-price').value || 0;
+      const baseCompare = document.getElementById('prod-compare').value || '';
+
+      generatedVariants = combinations.map(combo => {
+        const label = combo.map(c => c.value).join(' / ');
+        
+        // Preserve existing data if it exists for this combination
+        const existing = generatedVariants.find(v => v.label === label);
+        
+        return {
+          id: existing?.id || 'new_' + Math.random().toString(36).substr(2,9),
+          label,
+          combo,
+          sku: existing?.sku || '',
+          price: existing?.price || basePrice,
+          compare_price: existing?.compare_price || baseCompare,
+          stock_status: existing?.stock_status || 'in_stock',
+          media_id: existing?.media_id || ''
+        };
+      });
+
+      renderVariantsTable();
+    }
+
+    function renderVariantsTable() {
+      const tbody = document.getElementById('variants-tbody');
+      tbody.innerHTML = generatedVariants.map((v, i) => `
+        <tr class="${!v.price ? 'variant-row-error' : ''}">
+          <td class="fw-bold text-sm">${v.label}</td>
+          <td><input type="text" class="form-control" value="${v.sku}" oninput="generatedVariants[${i}].sku=this.value" placeholder="SKU"></td>
+          <td><input type="number" class="form-control" value="${v.price}" oninput="generatedVariants[${i}].price=this.value; renderVariantsTable();" placeholder="Price" required></td>
+          <td>
+            <span class="toggle"><input type="checkbox" ${v.stock_status === 'in_stock' ? 'checked' : ''} onchange="generatedVariants[${i}].stock_status=this.checked?'in_stock':'out_of_stock'"><span class="toggle-slider"></span></span>
+          </td>
+          <td>
+            <select class="form-control" onchange="generatedVariants[${i}].media_id=this.value">
+              <option value="">No specific image</option>
+              ${uploadedMedia.map((m, midx) => `<option value="${m.id}" ${v.media_id === m.id ? 'selected' : ''}>Image ${midx+1}</option>`).join('')}
+            </select>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    /* --- SPECS BUILDER --- */
+    function renderSpecs() {
+      const c = document.getElementById('specs-container');
+      c.innerHTML = specs.map((s, i) => `
+        <div class="spec-row">
+          <input type="text" class="form-control" placeholder="Key (e.g. Material)" value="${s.key}" oninput="specs[${i}].key=this.value" style="flex:1;">
+          <input type="text" class="form-control" placeholder="Value (e.g. 100% Cotton)" value="${s.value}" oninput="specs[${i}].value=this.value" style="flex:2;">
+          <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger); padding:0.4rem 0.75rem;" onclick="specs.splice(${i},1); renderSpecs();">✕</button>
+        </div>
+      `).join('');
+    }
+
+    /* --- MAIN FORM ACTIONS --- */
+    window.openModal = function() {
+      document.getElementById('product-form').reset();
+      document.getElementById('prod-id').value = '';
+      document.getElementById('modal-title').textContent = 'Add Product';
+      
+      uploadedMedia = []; renderMediaGallery();
+      optionTypes = []; renderOptionTypes();
+      generatedVariants = []; renderVariantsTable();
+      specs = []; renderSpecs();
+      
+      document.getElementById('has-variants').checked = false;
+      document.getElementById('variants-section').style.display = 'none';
+      
+      document.getElementById('product-modal').classList.add('active');
+    }
+
     window.editProduct = async function(id) {
-      const { data: p } = await supabase.from('products').select('*, media:product_media(*)').eq('id', id).single();
-      if (!p) return;
+      showToast('Loading product details...', 'info');
+      
+      // Fetch full product hierarchy
+      const { data: p, error } = await supabase.from('products').select(`
+        *,
+        media:product_media(*),
+        option_types:product_option_types(*, values:product_option_values(*)),
+        variants:product_variants(*),
+        details:product_details(*)
+      `).eq('id', id).single();
+
+      if (error || !p) { showToast('Error loading product', 'error'); return; }
 
       document.getElementById('prod-id').value = p.id;
       document.getElementById('prod-name').value = p.name;
@@ -280,26 +550,220 @@
       document.getElementById('prod-featured').checked = p.is_featured;
       document.getElementById('prod-published').checked = p.is_published;
 
-      uploadedMedia = p.media ? [...p.media] : [];
-      renderMediaPreview();
+      // Media
+      uploadedMedia = (p.media || []).sort((a,b)=>a.sort_order - b.sort_order).map(m => ({...m, id: m.id}));
+      renderMediaGallery();
+
+      // Details
+      const det = p.details;
+      if (det) {
+        document.getElementById('detail-care').value = det.care_instructions || '';
+        document.getElementById('detail-box').value = det.whats_in_box || '';
+        document.getElementById('detail-shipping').value = det.shipping_policy || '';
+        document.getElementById('detail-return').value = det.return_policy || '';
+        if (det.specifications) {
+          specs = Array.isArray(det.specifications) ? det.specifications : Object.entries(det.specifications).map(([k,v])=>({key:k, value:v}));
+        } else { specs = []; }
+      } else {
+        document.getElementById('detail-care').value = '';
+        document.getElementById('detail-box').value = '';
+        document.getElementById('detail-shipping').value = '';
+        document.getElementById('detail-return').value = '';
+        specs = [];
+      }
+      renderSpecs();
+
+      // Variants
+      if (p.option_types && p.option_types.length > 0) {
+        document.getElementById('has-variants').checked = true;
+        document.getElementById('variants-section').style.display = 'block';
+        
+        optionTypes = p.option_types.sort((a,b)=>a.sort_order - b.sort_order).map(ot => {
+          const sortedVals = ot.values.sort((a,b)=>a.sort_order - b.sort_order);
+          return {
+            id: ot.id,
+            name: ot.name,
+            display_type: ot.display_type,
+            values: sortedVals.map(v => v.value),
+            colors: sortedVals.map(v => v.color_hex),
+            valueIds: sortedVals.map(v => v.id) // keep track for variant mapping
+          };
+        });
+        renderOptionTypes();
+
+        if (p.variants && p.variants.length > 0) {
+          // Reconstruct generatedVariants
+          generatedVariants = p.variants.map(v => {
+            // Rebuild label from value IDs
+            let labelParts = [];
+            if(v.option_value_ids) {
+              optionTypes.forEach(ot => {
+                const idx = ot.valueIds.findIndex(vid => v.option_value_ids.includes(vid));
+                if(idx !== -1) labelParts.push(ot.values[idx]);
+              });
+            }
+            return {
+              id: v.id,
+              label: labelParts.join(' / '),
+              sku: v.sku || '',
+              price: v.price,
+              compare_price: v.compare_price || '',
+              stock_status: v.stock_status,
+              media_id: v.media_id || '',
+              original_value_ids: v.option_value_ids // save for update
+            };
+          });
+          renderVariantsTable();
+        } else {
+          generatedVariants = [];
+        }
+      } else {
+        document.getElementById('has-variants').checked = false;
+        document.getElementById('variants-section').style.display = 'none';
+        optionTypes = [];
+        generatedVariants = [];
+      }
 
       document.getElementById('modal-title').textContent = 'Edit Product';
       document.getElementById('product-modal').classList.add('active');
     }
 
-    window.removeMedia = function(index) {
-      uploadedMedia.splice(index, 1);
-      renderMediaPreview();
-    }
+    async function saveProduct(e) {
+      e.preventDefault();
+      
+      const hasVariants = document.getElementById('has-variants').checked;
+      if (hasVariants) {
+        if(optionTypes.length === 0 || generatedVariants.length === 0) {
+          showToast('Please define variants or uncheck "This product has variants"', 'warning');
+          return;
+        }
+        if(generatedVariants.some(v => !v.price)) {
+          showToast('All variants must have a price', 'warning');
+          return;
+        }
+      }
 
-    function renderMediaPreview() {
-      const container = document.getElementById('media-preview');
-      container.innerHTML = uploadedMedia.map((m, i) => `
-        <div style="position:relative; width:80px; height:80px; border-radius:4px; overflow:hidden; border:1px solid #ddd;">
-          <img src="${m.url}" style="width:100%; height:100%; object-fit:cover;">
-          <button type="button" onclick="window.removeMedia(${i})" style="position:absolute; top:2px; right:2px; background:red; color:white; border-radius:50%; width:20px; height:20px; font-size:10px; line-height:20px; text-align:center;">✕</button>
-        </div>
-      `).join('');
+      const btn = document.getElementById('save-product-btn');
+      btn.disabled = true;
+      btn.textContent = 'Saving...';
+
+      try {
+        const id = document.getElementById('prod-id').value;
+        const prodData = {
+          name: document.getElementById('prod-name').value,
+          slug: document.getElementById('prod-slug').value,
+          category_id: document.getElementById('prod-category').value || null,
+          description: document.getElementById('prod-desc').value,
+          price: document.getElementById('prod-price').value,
+          compare_price: document.getElementById('prod-compare').value || null,
+          stock_status: document.getElementById('prod-stock').checked ? 'in_stock' : 'out_of_stock',
+          is_featured: document.getElementById('prod-featured').checked,
+          is_published: document.getElementById('prod-published').checked
+        };
+
+        let productId = id;
+
+        // 1. PRODUCT
+        if (id) {
+          const { error } = await supabase.from('products').update(prodData).eq('id', id);
+          if (error) throw error;
+        } else {
+          const { data, error } = await supabase.from('products').insert([prodData]).select().single();
+          if (error) throw error;
+          productId = data.id;
+        }
+
+        // 2. MEDIA
+        // Very basic replace: delete old, insert new. 
+        // We generate real UUIDs for new media so variants can link them.
+        await supabase.from('product_media').delete().eq('product_id', productId);
+        let mediaMap = {}; // mapping old temp ids to new UUIDs
+        if (uploadedMedia.length > 0) {
+          const mediaInserts = uploadedMedia.map((m, i) => {
+            const uuid = crypto.randomUUID();
+            mediaMap[m.id] = uuid;
+            return { id: uuid, product_id: productId, url: m.url, type: m.type, public_id: m.public_id, sort_order: i };
+          });
+          await supabase.from('product_media').insert(mediaInserts);
+        }
+
+        // 3. DETAILS
+        const validSpecs = specs.filter(s => s.key.trim() !== '' && s.value.trim() !== '');
+        const detailsData = {
+          product_id: productId,
+          specifications: validSpecs.length > 0 ? validSpecs : null,
+          care_instructions: document.getElementById('detail-care').value || null,
+          whats_in_box: document.getElementById('detail-box').value || null,
+          shipping_policy: document.getElementById('detail-shipping').value || null,
+          return_policy: document.getElementById('detail-return').value || null
+        };
+        await supabase.from('product_details').upsert(detailsData, { onConflict: 'product_id' });
+
+        // 4. VARIANTS HIERARCHY
+        // Delete existing hierarchy (cascade takes care of values and variants)
+        if (id) {
+          await supabase.from('product_option_types').delete().eq('product_id', productId);
+        }
+
+        if (hasVariants) {
+          for (let i=0; i<optionTypes.length; i++) {
+            const ot = optionTypes[i];
+            const { data: insertedOt } = await supabase.from('product_option_types').insert({
+              product_id: productId, name: ot.name, display_type: ot.display_type, sort_order: i
+            }).select().single();
+            
+            // Insert values
+            for (let j=0; j<ot.values.length; j++) {
+              if(!ot.values[j].trim()) continue;
+              const { data: insertedVal } = await supabase.from('product_option_values').insert({
+                option_type_id: insertedOt.id, value: ot.values[j], color_hex: ot.colors?.[j] || null, sort_order: j
+              }).select().single();
+              
+              // We need to map the combo string to the actual DB UUID
+              ot.dbValueMap = ot.dbValueMap || {};
+              ot.dbValueMap[ot.values[j]] = insertedVal.id;
+            }
+          }
+
+          // Insert variants
+          const variantInserts = generatedVariants.map(v => {
+            // Find the UUIDs for this combo
+            const valueIds = [];
+            if(v.combo) {
+              v.combo.forEach(c => {
+                const ot = optionTypes.find(t => t.name === c.typeName);
+                if(ot && ot.dbValueMap) valueIds.push(ot.dbValueMap[c.value]);
+              });
+            } else if (v.original_value_ids) {
+              // Fallback for edit without generating combinations again
+               valueIds.push(...v.original_value_ids);
+            }
+
+            return {
+              product_id: productId,
+              sku: v.sku || null,
+              price: v.price,
+              compare_price: v.compare_price || null,
+              stock_status: v.stock_status,
+              option_value_ids: valueIds,
+              media_id: mediaMap[v.media_id] || v.media_id || null // use newly mapped UUID if new, else keep old
+            };
+          });
+
+          await supabase.from('product_variants').insert(variantInserts);
+        }
+
+        showToast('Product saved successfully', 'success');
+        document.getElementById('product-modal').classList.remove('active');
+        loadProducts();
+
+      } catch (error) {
+        showToast(error.message, 'error');
+        console.error(error);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Save Product';
+      }
     }
 
     init();

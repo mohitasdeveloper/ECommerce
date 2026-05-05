@@ -28,14 +28,28 @@
       </header>
 
       <div class="admin-content">
+        <div class="quick-actions">
+          <a href="products.html" class="btn btn-primary btn-sm">+ Add Product</a>
+          <a href="orders.html" class="btn btn-outline btn-sm">View Orders</a>
+          <a href="coupons.html" class="btn btn-outline btn-sm">Manage Coupons</a>
+        </div>
+
         <div class="metric-grid">
+          <div class="metric-card">
+            <div class="metric-title">Revenue Today</div>
+            <div class="metric-value" id="metric-rev-today">-</div>
+          </div>
+          <div class="metric-card">
+            <div class="metric-title">Revenue This Month</div>
+            <div class="metric-value" id="metric-rev-month">-</div>
+          </div>
           <div class="metric-card">
             <div class="metric-title">Total Orders</div>
             <div class="metric-value" id="metric-orders">-</div>
           </div>
           <div class="metric-card">
-            <div class="metric-title">Total Revenue</div>
-            <div class="metric-value" id="metric-revenue">-</div>
+            <div class="metric-title">Pending Orders</div>
+            <div class="metric-value" id="metric-pending" style="color:var(--color-warning);">-</div>
           </div>
           <div class="metric-card">
             <div class="metric-title">Total Products</div>
@@ -83,8 +97,26 @@
       
       if (orders) {
         document.getElementById('metric-orders').textContent = orders.length;
-        const totalRev = orders.reduce((sum, o) => sum + Number(o.total), 0);
-        document.getElementById('metric-revenue').textContent = `₹${totalRev.toFixed(2)}`;
+        
+        const now = new Date();
+        const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        
+        let revToday = 0;
+        let revMonth = 0;
+        let pending = 0;
+
+        orders.forEach(o => {
+          const t = new Date(o.created_at).getTime();
+          const val = Number(o.total);
+          if (t >= startOfDay) revToday += val;
+          if (t >= startOfMonth) revMonth += val;
+          if (o.status === 'pending') pending++;
+        });
+
+        document.getElementById('metric-rev-today').textContent = `₹${revToday.toFixed(0)}`;
+        document.getElementById('metric-rev-month').textContent = `₹${revMonth.toFixed(0)}`;
+        document.getElementById('metric-pending').textContent = pending;
 
         // Recent Orders
         const recent = orders.slice(0, 10);

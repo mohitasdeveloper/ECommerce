@@ -15,6 +15,8 @@
         <a href="products.html">Products</a>
         <a href="orders.html">Orders</a>
         <a href="coupons.html" class="active">Coupons</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="blog.html">Blog</a>
         <a href="settings.html">Settings</a>
       </nav>
     </aside>
@@ -34,11 +36,13 @@
                 <th>Discount</th>
                 <th>Min Order</th>
                 <th>Uses</th>
+                <th>Expires</th>
                 <th>Status</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="coupons-tbody">
-              <tr><td colspan="5">Loading...</td></tr>
+              <tr><td colspan="7">Loading...</td></tr>
             </tbody>
           </table>
         </div>
@@ -46,16 +50,123 @@
     </main>
   </div>
 
+  <!-- Add/Edit Coupon Modal -->
+  <div class="modal-overlay" id="coupon-modal">
+    <div class="modal-content" style="max-width: 600px;">
+      <div class="d-flex justify-between align-center mb-4 pb-3" style="border-bottom:1px solid var(--color-border);">
+        <h2 id="modal-title" style="margin:0;">Add Coupon</h2>
+        <button type="button" id="close-modal-btn" class="btn" style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
+      </div>
+      <form id="coupon-form">
+        <input type="hidden" id="coupon-id">
+        
+        <div class="form-group mb-4">
+          <label class="form-label">Coupon Code</label>
+          <input type="text" id="coup-code" class="form-control" style="text-transform:uppercase;" required placeholder="e.g. SUMMER20">
+        </div>
+
+        <div class="d-flex gap-4 mb-4">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Discount Type</label>
+            <select id="coup-type" class="form-control" required>
+              <option value="percent">Percentage (%)</option>
+              <option value="flat">Flat Amount (₹)</option>
+            </select>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Discount Value</label>
+            <input type="number" id="coup-value" class="form-control" required placeholder="e.g. 20">
+          </div>
+        </div>
+
+        <div class="d-flex gap-4 mb-4">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Minimum Order (₹)</label>
+            <input type="number" id="coup-min" class="form-control" value="0">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Usage Limit (Total)</label>
+            <input type="number" id="coup-max" class="form-control" placeholder="Leave blank for unlimited">
+          </div>
+        </div>
+
+        <div class="form-group mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+          <label class="form-label">Expiry Date</label>
+          <input type="datetime-local" id="coup-expiry" class="form-control">
+        </div>
+
+        <div class="form-group mb-4">
+          <label class="d-flex align-center gap-2">
+            <span class="toggle"><input type="checkbox" id="coup-active" checked><span class="toggle-slider"></span></span>
+            <span style="font-weight:500;">Active</span>
+          </label>
+        </div>
+
+        <div class="d-flex justify-end gap-3 mt-4">
+          <button type="button" class="btn btn-outline" onclick="document.getElementById('coupon-modal').classList.remove('active')">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="save-coupon-btn">Save Coupon</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script type="module">
     import { initAuth } from '../js/auth.js';
     import { checkAdmin } from '../js/admin.js';
     import { supabase } from '../js/supabase.js';
+    import { showToast } from '../js/toast.js';
 
     async function init() {
       await initAuth();
       await checkAdmin();
       loadCoupons();
-      // Logic for adding/editing coupons would go here (similar to products)
+
+      document.getElementById('add-coupon-btn').addEventListener('click', () => {
+        document.getElementById('coupon-form').reset();
+        document.getElementById('coupon-id').value = '';
+        document.getElementById('modal-title').textContent = 'Add Coupon';
+        document.getElementById('coupon-modal').classList.add('active');
+      });
+
+      document.getElementById('close-modal-btn').addEventListener('click', () => {
+        document.getElementById('coupon-modal').classList.remove('active');
+      });
+
+      document.getElementById('coupon-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = document.getElementById('save-coupon-btn');
+        btn.disabled = true;
+        btn.textContent = 'Saving...';
+
+        const id = document.getElementById('coupon-id').value;
+        const data = {
+          code: document.getElementById('coup-code').value.toUpperCase(),
+          discount_type: document.getElementById('coup-type').value,
+          discount_value: document.getElementById('coup-value').value,
+          min_order: document.getElementById('coup-min').value || 0,
+          max_uses: document.getElementById('coup-max').value || null,
+          expires_at: document.getElementById('coup-expiry').value ? new Date(document.getElementById('coup-expiry').value).toISOString() : null,
+          is_active: document.getElementById('coup-active').checked
+        };
+
+        try {
+          if (id) {
+            const { error } = await supabase.from('coupons').update(data).eq('id', id);
+            if (error) throw error;
+          } else {
+            const { error } = await supabase.from('coupons').insert([data]);
+            if (error) throw error;
+          }
+          showToast('Coupon saved', 'success');
+          document.getElementById('coupon-modal').classList.remove('active');
+          loadCoupons();
+        } catch(err) {
+          showToast(err.message, 'error');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = 'Save Coupon';
+        }
+      });
     }
 
     async function loadCoupons() {
@@ -63,20 +174,58 @@
       const tbody = document.getElementById('coupons-tbody');
       
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5">No coupons found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">No coupons found.</td></tr>';
         return;
       }
 
-      tbody.innerHTML = data.map(c => `
-        <tr>
-          <td class="fw-bold">${c.code}</td>
-          <td>${c.discount_type === 'percent' ? c.discount_value + '%' : '₹' + c.discount_value}</td>
-          <td>₹${c.min_order}</td>
-          <td>${c.used_count} ${c.max_uses ? `/ ${c.max_uses}` : ''}</td>
-          <td><span class="badge-stock ${c.is_active ? 'in-stock' : 'out-of-stock'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
-        </tr>
-      `).join('');
+      tbody.innerHTML = data.map(c => {
+        let expText = '-';
+        if (c.expires_at) {
+          const isExp = new Date(c.expires_at) < new Date();
+          expText = `<span style="color:${isExp ? 'var(--color-danger)' : 'inherit'};">${new Date(c.expires_at).toLocaleDateString()}</span>`;
+        }
+        return `
+          <tr>
+            <td class="fw-bold" style="color:var(--color-accent);">${c.code}</td>
+            <td class="fw-bold">${c.discount_type === 'percent' ? c.discount_value + '%' : '₹' + c.discount_value}</td>
+            <td>₹${c.min_order}</td>
+            <td>${c.used_count} ${c.max_uses ? `/ ${c.max_uses}` : ' / ∞'}</td>
+            <td>${expText}</td>
+            <td><span class="badge-stock ${c.is_active ? 'in-stock' : 'out-of-stock'}">${c.is_active ? 'Active' : 'Inactive'}</span></td>
+            <td>
+              <div class="d-flex gap-2">
+                <button class="btn btn-outline btn-sm" onclick="window.editCoupon('${c.id}')">Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="window.deleteCoupon('${c.id}')">Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
     }
+
+    window.editCoupon = async function(id) {
+      const { data: c } = await supabase.from('coupons').select('*').eq('id', id).single();
+      if(!c) return;
+
+      document.getElementById('coupon-id').value = c.id;
+      document.getElementById('coup-code').value = c.code;
+      document.getElementById('coup-type').value = c.discount_type;
+      document.getElementById('coup-value').value = c.discount_value;
+      document.getElementById('coup-min').value = c.min_order;
+      document.getElementById('coup-max').value = c.max_uses || '';
+      document.getElementById('coup-expiry').value = c.expires_at ? new Date(c.expires_at).toISOString().slice(0,16) : '';
+      document.getElementById('coup-active').checked = c.is_active;
+
+      document.getElementById('modal-title').textContent = 'Edit Coupon';
+      document.getElementById('coupon-modal').classList.add('active');
+    };
+
+    window.deleteCoupon = async function(id) {
+      if(!confirm('Delete this coupon?')) return;
+      const { error } = await supabase.from('coupons').delete().eq('id', id);
+      if(error) showToast('Error deleting coupon', 'error');
+      else { showToast('Coupon deleted', 'success'); loadCoupons(); }
+    };
 
     init();
   </script>

@@ -15,6 +15,8 @@
         <a href="products.html">Products</a>
         <a href="orders.html" class="active">Orders</a>
         <a href="coupons.html">Coupons</a>
+        <a href="reviews.html">Reviews</a>
+        <a href="blog.html">Blog</a>
         <a href="settings.html">Settings</a>
       </nav>
     </aside>
@@ -33,17 +35,94 @@
                 <th>Customer</th>
                 <th>Date</th>
                 <th>Total</th>
+                <th>Payment</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
             </thead>
             <tbody id="orders-tbody">
-              <tr><td colspan="6">Loading...</td></tr>
+              <tr><td colspan="7">Loading...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </main>
+  </div>
+
+  <!-- Order Detail Modal -->
+  <div class="modal-overlay" id="order-modal">
+    <div class="modal-content" style="max-width: 900px;">
+      <div class="d-flex justify-between align-center mb-4 pb-3" style="border-bottom:1px solid var(--color-border);">
+        <div>
+          <h2 id="modal-title" style="margin:0;">Order Details</h2>
+          <div class="text-muted text-sm mt-1" id="modal-order-date"></div>
+        </div>
+        <button type="button" id="close-modal-btn" class="btn" style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
+      </div>
+
+      <div class="d-flex gap-6 mb-6">
+        <div style="flex:1;">
+          <h3 style="font-size:1rem; margin-bottom:0.75rem;">Customer Information</h3>
+          <div class="product-card" style="padding:1.25rem;">
+            <div id="cust-name" class="fw-bold mb-1"></div>
+            <div id="cust-email" class="text-muted text-sm mb-3"></div>
+            <div style="font-size:0.85rem;">
+              <strong style="display:block;margin-bottom:0.25rem;">Shipping Address:</strong>
+              <div id="cust-address" style="line-height:1.5;"></div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="flex:1;">
+          <h3 style="font-size:1rem; margin-bottom:0.75rem;">Payment & Status</h3>
+          <div class="product-card" style="padding:1.25rem;">
+            <div class="d-flex justify-between align-center mb-3">
+              <span class="text-sm font-medium">Payment ID</span>
+              <span id="pay-id" class="text-sm text-muted"></span>
+            </div>
+            <div class="d-flex justify-between align-center mb-4 pb-4" style="border-bottom:1px solid var(--color-border);">
+              <span class="text-sm font-medium">Coupon Used</span>
+              <span id="pay-coupon" class="badge-stock in-stock" style="display:none;"></span>
+              <span id="pay-coupon-none" class="text-sm text-muted">None</span>
+            </div>
+            
+            <label class="form-label text-sm">Update Order Status</label>
+            <select id="status-updater" class="form-control" style="font-weight:600;">
+              <option value="pending">Pending</option>
+              <option value="confirmed">Confirmed</option>
+              <option value="shipped">Shipped</option>
+              <option value="delivered">Delivered</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <h3 style="font-size:1rem; margin-bottom:0.75rem;">Order Items</h3>
+      <div class="variant-table-wrap mb-6">
+        <table style="width: 100%;">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Qty</th>
+              <th style="text-align:right;">Total</th>
+            </tr>
+          </thead>
+          <tbody id="order-items-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-end">
+        <div style="width: 300px;">
+          <div class="d-flex justify-between mb-2 text-sm"><span class="text-muted">Subtotal</span><span class="fw-bold" id="summ-sub"></span></div>
+          <div class="d-flex justify-between mb-2 text-sm"><span class="text-muted">Discount</span><span class="fw-bold" style="color:var(--color-success);" id="summ-disc"></span></div>
+          <div class="d-flex justify-between mb-3 text-sm pb-3" style="border-bottom:1px solid var(--color-border);"><span class="text-muted">Shipping</span><span class="fw-bold" id="summ-ship"></span></div>
+          <div class="d-flex justify-between text-lg"><span class="fw-bold">Total</span><span class="fw-bold" style="color:var(--color-accent);" id="summ-total"></span></div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script type="module">
@@ -52,10 +131,36 @@
     import { supabase } from '../js/supabase.js';
     import { showToast } from '../js/toast.js';
 
+    let allOrders = [];
+
     async function init() {
       await initAuth();
       await checkAdmin();
       loadOrders();
+
+      document.getElementById('close-modal-btn').addEventListener('click', () => {
+        document.getElementById('order-modal').classList.remove('active');
+      });
+
+      document.getElementById('status-updater').addEventListener('change', async (e) => {
+        const id = e.target.getAttribute('data-id');
+        const status = e.target.value;
+        const { error } = await supabase.from('orders').update({ status }).eq('id', id);
+        if (error) {
+          showToast('Error updating status', 'error');
+        } else {
+          showToast('Order status updated', 'success');
+          loadOrders(); // refresh table in background
+        }
+      });
+    }
+
+    function getStatusColor(status) {
+      if (status === 'confirmed') return { bg: '#e0e7ff', text: '#4f46e5' };
+      if (status === 'shipped') return { bg: '#fef3c7', text: '#d97706' };
+      if (status === 'delivered') return { bg: '#dcfce7', text: '#16a34a' };
+      if (status === 'cancelled') return { bg: '#fee2e2', text: '#dc2626' };
+      return { bg: '#f3f4f6', text: '#4b5563' }; // pending
     }
 
     async function loadOrders() {
@@ -66,19 +171,16 @@
       const tbody = document.getElementById('orders-tbody');
       
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6">No orders found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="7">No orders found.</td></tr>';
         return;
       }
+
+      allOrders = data;
 
       tbody.innerHTML = data.map(o => {
         const cName = o.user ? o.user.full_name : (o.shipping_address ? o.shipping_address.name : 'Unknown');
         const cEmail = o.user ? o.user.email : '';
-        
-        let statusColor = '#6b7280';
-        if (o.status === 'confirmed') statusColor = '#2563eb';
-        if (o.status === 'shipped') statusColor = '#d97706';
-        if (o.status === 'delivered') statusColor = '#16a34a';
-        if (o.status === 'cancelled') statusColor = '#dc2626';
+        const sc = getStatusColor(o.status);
 
         return `
           <tr>
@@ -89,31 +191,94 @@
             </td>
             <td>${new Date(o.created_at).toLocaleDateString()}</td>
             <td class="fw-bold">₹${o.total}</td>
+            <td><span class="badge-stock in-stock text-sm">${o.razorpay_payment_id ? 'Paid' : 'Unpaid'}</span></td>
             <td>
-              <select class="form-control" style="padding: 0.25rem 0.5rem; font-size: 0.875rem; border-color: ${statusColor}; color: ${statusColor}; font-weight:600;" onchange="window.updateStatus('${o.id}', this.value)">
-                <option value="pending" ${o.status === 'pending' ? 'selected' : ''}>Pending</option>
-                <option value="confirmed" ${o.status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
-                <option value="shipped" ${o.status === 'shipped' ? 'selected' : ''}>Shipped</option>
-                <option value="delivered" ${o.status === 'delivered' ? 'selected' : ''}>Delivered</option>
-                <option value="cancelled" ${o.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
-              </select>
+              <span class="badge-stock" style="background:${sc.bg};color:${sc.text};text-transform:capitalize;">${o.status}</span>
             </td>
             <td>
-              <button class="btn btn-outline btn-sm">View</button>
+              <button class="btn btn-outline btn-sm" onclick="window.viewOrder('${o.id}')">View Details</button>
             </td>
           </tr>
         `;
       }).join('');
     }
 
-    window.updateStatus = async function(id, status) {
-      const { error } = await supabase.from('orders').update({ status }).eq('id', id);
-      if (error) {
-        showToast('Error updating status', 'error');
+    window.viewOrder = async function(id) {
+      const order = allOrders.find(o => o.id === id);
+      if(!order) return;
+
+      // Fetch items
+      const { data: items } = await supabase.from('order_items').select('*').eq('order_id', id);
+
+      document.getElementById('modal-title').textContent = `Order #${order.id.split('-')[0].toUpperCase()}`;
+      document.getElementById('modal-order-date').textContent = `Placed on ${new Date(order.created_at).toLocaleString()}`;
+      
+      // Customer
+      document.getElementById('cust-name').textContent = order.user ? order.user.full_name : (order.shipping_address?.name || 'Unknown');
+      document.getElementById('cust-email').textContent = order.user ? order.user.email : '';
+      
+      // Address
+      const a = order.shipping_address || {};
+      document.getElementById('cust-address').innerHTML = `${a.name || ''}<br>${a.line1 || ''} ${a.line2 || ''}<br>${a.city || ''}, ${a.state || ''} ${a.pincode || ''}<br>Phone: ${a.phone || ''}`;
+
+      // Payment
+      document.getElementById('pay-id').textContent = order.razorpay_payment_id || 'N/A';
+      if(order.coupon_code) {
+        document.getElementById('pay-coupon').textContent = order.coupon_code;
+        document.getElementById('pay-coupon').style.display = 'inline-block';
+        document.getElementById('pay-coupon-none').style.display = 'none';
       } else {
-        showToast('Order status updated', 'success');
-        loadOrders();
+        document.getElementById('pay-coupon').style.display = 'none';
+        document.getElementById('pay-coupon-none').style.display = 'inline-block';
       }
+
+      // Status Updater
+      const updater = document.getElementById('status-updater');
+      updater.value = order.status;
+      updater.setAttribute('data-id', order.id);
+      const sc = getStatusColor(order.status);
+      updater.style.color = sc.text;
+      updater.style.borderColor = sc.text;
+
+      updater.addEventListener('change', (e) => {
+        const c = getStatusColor(e.target.value);
+        e.target.style.color = c.text;
+        e.target.style.borderColor = c.text;
+      });
+
+      // Items
+      const tbody = document.getElementById('order-items-tbody');
+      if(items && items.length > 0) {
+        tbody.innerHTML = items.map(item => {
+          const snap = item.product_snapshot || {};
+          return `
+            <tr>
+              <td>
+                <div class="d-flex align-center gap-3">
+                  ${snap.image_url ? `<img src="${snap.image_url}" style="width:40px;height:40px;object-fit:cover;border-radius:4px;">` : ''}
+                  <div>
+                    <div class="fw-bold text-sm">${snap.name || 'Product'}</div>
+                    ${snap.variant_label ? `<div class="text-muted text-sm">${snap.variant_label}</div>` : ''}
+                  </div>
+                </div>
+              </td>
+              <td class="text-sm">₹${item.price_at_purchase}</td>
+              <td class="text-sm">${item.quantity}</td>
+              <td style="text-align:right;" class="fw-bold">₹${(item.price_at_purchase * item.quantity).toFixed(2)}</td>
+            </tr>
+          `;
+        }).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="4">No items found.</td></tr>';
+      }
+
+      // Summary
+      document.getElementById('summ-sub').textContent = `₹${order.subtotal}`;
+      document.getElementById('summ-disc').textContent = `- ₹${order.discount}`;
+      document.getElementById('summ-ship').textContent = `₹${order.shipping_charge}`;
+      document.getElementById('summ-total').textContent = `₹${order.total}`;
+
+      document.getElementById('order-modal').classList.add('active');
     }
 
     init();

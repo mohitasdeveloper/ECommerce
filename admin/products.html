@@ -177,7 +177,7 @@
         
         <div class="form-group mb-4">
           <label class="form-label">Specifications (Key-Value)</label>
-          <div id="specs-container" class="d-flex flex-column gap-2 mb-2"></div>
+          <div id="specs-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem;"></div>
           <button type="button" class="btn btn-outline btn-sm" id="add-spec-btn">+ Add Row</button>
         </div>
 
@@ -270,14 +270,21 @@
         if (e.target.checked && window.optionTypes.length === 0) addOptionType();
       });
 
-      // Variant Builder Events
-      document.getElementById('add-option-type-btn').addEventListener('click', addOptionType);
-      document.getElementById('generate-variants-btn').addEventListener('click', generateVariantCombinations);
+      // Variants Builder Events
+      document.getElementById('add-option-type-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        addOptionType();
+      });
+      document.getElementById('generate-variants-btn').addEventListener('click', (e) => {
+        e.preventDefault();
+        generateVariantCombinations();
+      });
 
       // Specs
-      document.getElementById('add-spec-btn').addEventListener('click', () => {
+      document.getElementById('add-spec-btn').addEventListener('click', (e) => {
+        e.preventDefault();
         window.specs.push({ key: '', value: '' });
-        renderSpecs();
+        window.renderSpecs();
       });
 
       // Form Submit
@@ -407,13 +414,16 @@
     window.removeMedia = (idx) => { uploadedMedia.splice(idx, 1); renderMediaGallery(); }
 
     /* --- VARIANTS SYSTEM --- */
-    function addOptionType(data = { id: 'temp_' + Date.now(), name: '', display_type: 'button', values: [''] }) {
+    function addOptionType(data) {
+      if (!data || data instanceof Event) {
+        data = { id: 'temp_' + Date.now(), name: '', display_type: 'button', values: [''] };
+      }
       window.optionTypes.push(data);
-      renderOptionTypes();
+      window.renderOptionTypes();
     }
-    window.removeOptionType = (idx) => { window.optionTypes.splice(idx, 1); renderOptionTypes(); }
+    window.removeOptionType = (idx) => { window.optionTypes.splice(idx, 1); window.renderOptionTypes(); }
 
-    function renderOptionTypes() {
+    window.renderOptionTypes = function renderOptionTypes() {
       const c = document.getElementById('option-types-container');
       c.innerHTML = window.optionTypes.map((ot, i) => `
         <div style="border:1px solid var(--color-border); padding:1rem; border-radius:var(--radius-sm); background:white;">
@@ -432,10 +442,10 @@
               <div class="d-flex align-center" style="border:1px solid #ccc; border-radius:100px; padding-left:12px; overflow:hidden;">
                 <input type="text" value="${v}" oninput="window.optionTypes[${i}].values[${j}]=this.value" style="border:none; outline:none; width:80px; font-size:0.85rem; padding:6px 0;">
                 ${ot.display_type === 'swatch' ? `<input type="color" value="${ot.colors?.[j] || '#000000'}" onchange="if(!window.optionTypes[${i}].colors) window.optionTypes[${i}].colors=[]; window.optionTypes[${i}].colors[${j}]=this.value" style="width:24px;height:24px;border:none;padding:0;background:none;margin-right:4px;">` : ''}
-                <button type="button" onclick="window.optionTypes[${i}].values.splice(${j},1); renderOptionTypes();" style="background:var(--color-bg-secondary); border:none; padding:8px 12px; cursor:pointer;">✕</button>
+                <button type="button" onclick="window.optionTypes[${i}].values.splice(${j},1); window.renderOptionTypes();" style="background:var(--color-bg-secondary); border:none; padding:8px 12px; cursor:pointer;">✕</button>
               </div>
             `).join('')}
-            <button type="button" class="btn btn-sm btn-outline" style="border-radius:100px;" onclick="window.optionTypes[${i}].values.push(''); renderOptionTypes();">+ Value</button>
+            <button type="button" class="btn btn-sm btn-outline" style="border-radius:100px;" onclick="window.optionTypes[${i}].values.push(''); window.renderOptionTypes();">+ Value</button>
           </div>
         </div>
       `).join('');
@@ -473,16 +483,16 @@
         };
       });
 
-      renderVariantsTable();
+      window.renderVariantsTable();
     }
 
-    function renderVariantsTable() {
+    window.renderVariantsTable = function renderVariantsTable() {
       const tbody = document.getElementById('variants-tbody');
       tbody.innerHTML = window.generatedVariants.map((v, i) => `
         <tr class="${!v.price ? 'variant-row-error' : ''}">
           <td class="fw-bold text-sm">${v.label}</td>
           <td><input type="text" class="form-control" value="${v.sku}" oninput="window.generatedVariants[${i}].sku=this.value" placeholder="SKU"></td>
-          <td><input type="number" class="form-control" value="${v.price}" oninput="window.generatedVariants[${i}].price=this.value; renderVariantsTable();" placeholder="Price" required></td>
+          <td><input type="number" class="form-control" value="${v.price}" oninput="window.generatedVariants[${i}].price=this.value; window.renderVariantsTable();" placeholder="Price" required></td>
           <td>
             <span class="toggle"><input type="checkbox" ${v.stock_status === 'in_stock' ? 'checked' : ''} onchange="window.generatedVariants[${i}].stock_status=this.checked?'in_stock':'out_of_stock'"><span class="toggle-slider"></span></span>
           </td>
@@ -497,13 +507,13 @@
     }
 
     /* --- SPECS BUILDER --- */
-    function renderSpecs() {
+    window.renderSpecs = function renderSpecs() {
       const c = document.getElementById('specs-container');
       c.innerHTML = window.specs.map((s, i) => `
         <div class="spec-row">
           <input type="text" class="form-control" placeholder="Key (e.g. Material)" value="${s.key}" oninput="window.specs[${i}].key=this.value" style="flex:1;">
           <input type="text" class="form-control" placeholder="Value (e.g. 100% Cotton)" value="${s.value}" oninput="window.specs[${i}].value=this.value" style="flex:2;">
-          <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger); padding:0.4rem 0.75rem;" onclick="window.specs.splice(${i},1); renderSpecs();">✕</button>
+          <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger); padding:0.4rem 0.75rem;" onclick="window.specs.splice(${i},1); window.renderSpecs();">✕</button>
         </div>
       `).join('');
     }
@@ -515,9 +525,9 @@
       document.getElementById('modal-title').textContent = 'Add Product';
       
       uploadedMedia = []; renderMediaGallery();
-      window.optionTypes = []; renderOptionTypes();
-      window.generatedVariants = []; renderVariantsTable();
-      window.specs = []; renderSpecs();
+      window.optionTypes = []; window.renderOptionTypes();
+      window.generatedVariants = []; window.renderVariantsTable();
+      window.specs = []; window.renderSpecs();
       
       document.getElementById('has-variants').checked = false;
       document.getElementById('variants-section').style.display = 'none';
@@ -571,7 +581,7 @@
         document.getElementById('detail-return').value = '';
         window.specs = [];
       }
-      renderSpecs();
+      window.renderSpecs();
 
       // Variants
       if (p.option_types && p.option_types.length > 0) {
@@ -589,7 +599,7 @@
             valueIds: sortedVals.map(v => v.id) // keep track for variant mapping
           };
         });
-        renderOptionTypes();
+        window.renderOptionTypes();
 
         if (p.variants && p.variants.length > 0) {
           // Reconstruct generatedVariants
@@ -613,7 +623,7 @@
               original_value_ids: v.option_value_ids // save for update
             };
           });
-          renderVariantsTable();
+          window.renderVariantsTable();
         } else {
           window.generatedVariants = [];
         }

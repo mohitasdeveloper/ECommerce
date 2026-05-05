@@ -6,79 +6,156 @@
   <title>My Account - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
   <style>
-    .account-layout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
-    @media (min-width: 768px) { .account-layout { grid-template-columns: 220px 1fr; gap: 2rem; } }
-    .account-nav { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 0.75rem; height: fit-content; display: flex; gap: 0.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
-    .account-nav::-webkit-scrollbar { display: none; }
-    @media (min-width: 768px) { .account-nav { flex-direction: column; position: sticky; top: 5rem; padding: 1rem; overflow-x: visible; } }
-    .account-nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 500; color: var(--color-text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
-    @media (min-width: 768px) { .account-nav-item { width: 100%; text-align: left; font-size: 0.9rem; padding: 0.7rem 1rem; } }
-    .account-nav-item:hover { background: var(--color-bg-secondary); color: var(--color-text); }
-    .account-nav-item.active { background: var(--color-accent); color: white; }
-    .panel { display: none; } .panel.active { display: block; }
-    .order-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
-    .order-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
-    .address-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; position: relative; }
-    .address-card.default { border-color: var(--color-accent); }
+    /* Account layout */
+    .account-layout { display: flex; flex-direction: column; gap: 0; }
+    @media (min-width: 768px) { .account-layout { display: grid; grid-template-columns: 260px 1fr; gap: 2rem; } }
+
+    /* Sidebar */
+    .account-sidebar { background: white; border-bottom: 1px solid var(--color-border); padding: 0; }
+    @media (min-width: 768px) { .account-sidebar { border: 1px solid var(--color-border); border-radius: var(--radius-lg); position: sticky; top: 5rem; height: fit-content; padding: 1.5rem; border-bottom: none; } }
+
+    /* Profile card at top of sidebar */
+    .profile-card { display: flex; align-items: center; gap: 1rem; padding: 1rem; }
+    @media (min-width: 768px) { .profile-card { flex-direction: column; text-align: center; padding: 0 0 1.5rem; border-bottom: 1px solid var(--color-border); margin-bottom: 1rem; } }
+    
+    .avatar-wrap { position: relative; flex-shrink: 0; }
+    .avatar { width: 56px; height: 56px; border-radius: 50%; object-fit: cover; border: 3px solid var(--color-bg-secondary); background: var(--color-bg-secondary); }
+    @media (min-width: 768px) { .avatar { width: 80px; height: 80px; } }
+    .avatar-edit-btn { position: absolute; bottom: -2px; right: -2px; width: 24px; height: 24px; border-radius: 50%; background: var(--color-accent); color: white; display: flex; align-items: center; justify-content: center; border: 2px solid white; cursor: pointer; transition: transform 0.2s; }
+    .avatar-edit-btn:hover { transform: scale(1.1); }
+    .avatar-edit-btn svg { width: 12px; height: 12px; }
+
+    .profile-info { min-width: 0; }
+    .profile-name { font-weight: 700; font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .profile-email { font-size: 0.8rem; color: var(--color-text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* Tabs - horizontal scroll on mobile */
+    .account-tabs { display: flex; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; border-bottom: 1px solid var(--color-border); background: white; }
+    .account-tabs::-webkit-scrollbar { display: none; }
+    @media (min-width: 768px) { .account-tabs { flex-direction: column; border-bottom: none; overflow-x: visible; gap: 0.25rem; } }
+
+    .tab-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.85rem 1.15rem; font-size: 0.82rem; font-weight: 600; color: var(--color-text-muted); white-space: nowrap; cursor: pointer; border-bottom: 2px solid transparent; flex-shrink: 0; transition: all 0.2s; -webkit-tap-highlight-color: transparent; }
+    .tab-item:hover { color: var(--color-text); }
+    .tab-item.active { color: var(--color-accent); border-bottom-color: var(--color-accent); }
+    @media (min-width: 768px) {
+      .tab-item { border-bottom: none; border-radius: var(--radius-md); padding: 0.7rem 1rem; font-size: 0.9rem; }
+      .tab-item.active { background: rgba(37,99,235,0.08); border-bottom: none; }
+      .tab-item:hover { background: var(--color-bg-secondary); }
+    }
+    .tab-icon { font-size: 1.1rem; line-height: 1; }
+
+    /* Content panels */
+    .panel { display: none; }
+    .panel.active { display: block; }
+    .account-content { padding: 1.25rem 0; }
+    @media (min-width: 768px) { .account-content { padding: 0; } }
+
+    /* Order cards */
+    .order-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: box-shadow 0.2s; }
+    .order-card:hover { box-shadow: var(--shadow-sm); }
+    .order-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .order-meta { font-size: 0.78rem; color: var(--color-text-muted); }
+
+    /* Address cards */
+    .addresses-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
+    @media (min-width: 640px) { .addresses-grid { grid-template-columns: 1fr 1fr; } }
+    .address-card { border: 1.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; position: relative; transition: all 0.2s; }
+    .address-card.default { border-color: var(--color-accent); background: rgba(37,99,235,0.02); }
+
+    /* Form grids */
+    .form-grid-2 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 480px) { .form-grid-2 { grid-template-columns: 1fr 1fr; } }
+    .form-grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 480px) { .form-grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 768px) { .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+    /* Empty states */
     .empty-state { text-align: center; padding: 3rem 1rem; }
     .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
-    .addr-form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 480px) { .addr-form-grid { grid-template-columns: 1fr 1fr; } }
-    .addr-form-grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 480px) { .addr-form-grid-3 { grid-template-columns: 1fr 1fr; } }
-    @media (min-width: 768px) { .addr-form-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
+
+    /* Logout mobile */
+    .logout-row { padding: 1rem; border-top: 1px solid var(--color-border); }
+    @media (min-width: 768px) { .logout-row { padding: 1rem 0; margin-top: 0.5rem; } }
+
+    /* Panel header */
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem; }
+    .panel-title { font-size: 1.2rem; font-weight: 700; }
   </style>
 </head>
 <body>
   <div id="header-placeholder"></div>
 
-  <main class="container section">
+  <main class="container section" style="padding-top: 0;">
     <div class="account-layout">
-      <!-- Sidebar Nav -->
-      <nav class="account-nav">
-        <button class="account-nav-item active" data-panel="orders">📦 My Orders</button>
-        <button class="account-nav-item" data-panel="wishlist">❤️ Wishlist</button>
-        <button class="account-nav-item" data-panel="addresses">📍 Addresses</button>
-        <button class="account-nav-item" data-panel="profile">👤 Profile</button>
-        <button class="account-nav-item" id="logout-btn" style="margin-top:1rem;color:var(--color-danger);">🚪 Logout</button>
-      </nav>
+      <!-- Sidebar -->
+      <aside class="account-sidebar">
+        <div class="profile-card">
+          <div class="avatar-wrap">
+            <img id="user-avatar" class="avatar" src="https://ui-avatars.com/api/?name=User&background=e5e7eb&color=6b7280&size=160&font-size=0.4" alt="Avatar">
+            <button class="avatar-edit-btn" id="change-avatar-btn" title="Change photo">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </button>
+          </div>
+          <div class="profile-info">
+            <div class="profile-name" id="sidebar-name">Loading...</div>
+            <div class="profile-email" id="sidebar-email"></div>
+          </div>
+        </div>
+        <nav class="account-tabs" id="account-tabs">
+          <button class="tab-item active" data-panel="orders"><span class="tab-icon">📦</span> Orders</button>
+          <button class="tab-item" data-panel="wishlist"><span class="tab-icon">❤️</span> Wishlist</button>
+          <button class="tab-item" data-panel="addresses"><span class="tab-icon">📍</span> Addresses</button>
+          <button class="tab-item" data-panel="profile"><span class="tab-icon">👤</span> Profile</button>
+        </nav>
+        <div class="logout-row">
+          <button class="btn btn-outline btn-sm btn-block" id="logout-btn" style="color:var(--color-danger); border-color: var(--color-danger);">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Logout
+          </button>
+        </div>
+      </aside>
 
       <!-- Panels -->
-      <div>
+      <div class="account-content">
         <!-- Orders Panel -->
         <div class="panel active" id="panel-orders">
-          <h2 style="margin-bottom:1.5rem;">My Orders</h2>
+          <div class="panel-header">
+            <h2 class="panel-title">My Orders</h2>
+          </div>
           <div id="orders-list"><p class="text-muted">Loading orders...</p></div>
         </div>
 
         <!-- Wishlist Panel -->
         <div class="panel" id="panel-wishlist">
-          <h2 style="margin-bottom:1.5rem;">My Wishlist</h2>
+          <div class="panel-header">
+            <h2 class="panel-title">My Wishlist</h2>
+          </div>
           <div id="wishlist-grid" class="product-grid"></div>
         </div>
 
         <!-- Addresses Panel -->
         <div class="panel" id="panel-addresses">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;">
-            <h2>My Addresses</h2>
+          <div class="panel-header">
+            <h2 class="panel-title">My Addresses</h2>
             <button class="btn btn-primary btn-sm" id="add-address-btn">+ Add Address</button>
           </div>
-          <div id="addresses-list"></div>
-          <form id="address-form" style="display:none;background:var(--color-bg-secondary);border-radius:var(--radius-lg);padding:1.25rem;margin-top:1rem;">
+          <div id="addresses-list" class="addresses-grid"></div>
+          <form id="address-form" style="display:none; background:var(--color-bg-secondary); border-radius:var(--radius-lg); padding:1.25rem; margin-top:1rem;">
             <h3 style="margin-bottom:1rem; font-size: 1rem;">New Address</h3>
-            <div class="addr-form-grid">
+            <div class="form-grid-2">
               <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="addr-name" required></div>
               <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="addr-phone" required></div>
             </div>
             <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-control" id="addr-line1" required></div>
             <div class="form-group"><label class="form-label">Address Line 2 (Optional)</label><input class="form-control" id="addr-line2"></div>
-            <div class="addr-form-grid-3">
+            <div class="form-grid-3">
               <div class="form-group"><label class="form-label">City</label><input class="form-control" id="addr-city" required></div>
               <div class="form-group"><label class="form-label">State</label><input class="form-control" id="addr-state" required></div>
               <div class="form-group"><label class="form-label">Pincode</label><input class="form-control" id="addr-pincode" required></div>
             </div>
-            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
+            <div style="display:flex; gap:0.75rem; flex-wrap:wrap;">
               <button type="submit" class="btn btn-primary">Save Address</button>
               <button type="button" class="btn btn-outline" id="cancel-address-btn">Cancel</button>
             </div>
@@ -87,12 +164,31 @@
 
         <!-- Profile Panel -->
         <div class="panel" id="panel-profile">
-          <h2 style="margin-bottom:1.5rem;">My Profile</h2>
-          <form id="profile-form" style="max-width:480px;">
-            <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="profile-name" class="form-control"></div>
+          <div class="panel-header">
+            <h2 class="panel-title">Edit Profile</h2>
+          </div>
+          
+          <!-- Avatar section -->
+          <div style="display:flex; align-items:center; gap:1.25rem; margin-bottom:2rem; padding: 1.25rem; background: var(--color-bg-secondary); border-radius: var(--radius-lg);">
+            <div class="avatar-wrap">
+              <img id="profile-avatar" class="avatar" style="width:72px;height:72px;" src="https://ui-avatars.com/api/?name=User&background=e5e7eb&color=6b7280&size=160&font-size=0.4" alt="Avatar">
+            </div>
+            <div>
+              <div style="font-weight:600; margin-bottom:0.5rem;">Profile Photo</div>
+              <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" id="change-avatar-btn-profile">Upload Photo</button>
+                <button class="btn btn-outline btn-sm" id="remove-avatar-btn" style="color:var(--color-danger); display:none;">Remove</button>
+              </div>
+            </div>
+          </div>
+
+          <form id="profile-form" style="max-width:520px;">
+            <div class="form-grid-2">
+              <div class="form-group"><label class="form-label">Full Name</label><input type="text" id="profile-name" class="form-control" placeholder="Your name"></div>
+              <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="profile-phone" class="form-control" placeholder="+91 00000 00000"></div>
+            </div>
             <div class="form-group"><label class="form-label">Email</label><input type="email" id="profile-email" class="form-control" disabled style="opacity:0.6;"></div>
-            <div class="form-group"><label class="form-label">Phone</label><input type="tel" id="profile-phone" class="form-control" placeholder="+91 00000 00000"></div>
-            <button type="submit" class="btn btn-primary" id="save-profile-btn">Save Changes</button>
+            <button type="submit" class="btn btn-primary" id="save-profile-btn" style="margin-top:0.5rem;">Save Changes</button>
           </form>
         </div>
       </div>
@@ -107,6 +203,7 @@
     import { supabase } from './js/supabase.js';
     import { showToast } from './js/toast.js';
     import { fetchProducts, renderProductCards } from './js/products.js';
+    import { openUploadWidget } from './js/cloudinary.js';
 
     document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
     document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
@@ -116,10 +213,25 @@
       const { user, profile } = await initPage();
       if (!user) { window.location.href = './login.html?returnUrl=./account.html'; return; }
 
+      // Set sidebar info
+      const avatarUrl = profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=e5e7eb&color=6b7280&size=160&font-size=0.4`;
+      document.getElementById('user-avatar').src = avatarUrl;
+      document.getElementById('profile-avatar').src = avatarUrl;
+      document.getElementById('sidebar-name').textContent = profile?.full_name || 'User';
+      
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const email = authUser?.email || '';
+      document.getElementById('sidebar-email').textContent = email;
+      document.getElementById('profile-email').value = email;
+
+      if (profile?.avatar_url) {
+        document.getElementById('remove-avatar-btn').style.display = 'inline-flex';
+      }
+
       // Tab navigation
-      document.querySelectorAll('.account-nav-item[data-panel]').forEach(btn => {
+      document.querySelectorAll('.tab-item[data-panel]').forEach(btn => {
         btn.addEventListener('click', () => {
-          document.querySelectorAll('.account-nav-item').forEach(b => b.classList.remove('active'));
+          document.querySelectorAll('.tab-item').forEach(b => b.classList.remove('active'));
           document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
           btn.classList.add('active');
           document.getElementById('panel-' + btn.dataset.panel).classList.add('active');
@@ -135,13 +247,11 @@
 
       document.getElementById('logout-btn').addEventListener('click', () => logout());
 
-      // Load profile data
+      // ---- PROFILE ----
       if (profile) {
         document.getElementById('profile-name').value = profile.full_name || '';
         document.getElementById('profile-phone').value = profile.phone || '';
       }
-      const { data: { user: authUser } } = await supabase.auth.getUser();
-      if (authUser) document.getElementById('profile-email').value = authUser.email || '';
 
       document.getElementById('profile-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -153,55 +263,100 @@
         }).eq('id', user.id);
         btn.disabled = false; btn.textContent = 'Save Changes';
         if (error) showToast('Error saving profile', 'error');
-        else showToast('Profile updated!', 'success');
+        else {
+          showToast('Profile updated!', 'success');
+          document.getElementById('sidebar-name').textContent = document.getElementById('profile-name').value || 'User';
+        }
       });
 
-      // Orders
-      const { data: orders } = await supabase.from('orders').select(`*, order_items(*, products(name))`).eq('user_id', user.id).order('created_at', { ascending: false });
+      // Avatar upload handlers
+      function handleAvatarUpload() {
+        openUploadWidget({ multiple: false, folder: 'avatars', cropping: true, croppingAspectRatio: 1 }, async (res) => {
+          const url = res.url;
+          const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+          if (!error) {
+            document.getElementById('user-avatar').src = url;
+            document.getElementById('profile-avatar').src = url;
+            document.getElementById('remove-avatar-btn').style.display = 'inline-flex';
+            showToast('Profile photo updated!', 'success');
+          } else {
+            showToast('Failed to update photo', 'error');
+          }
+        });
+      }
+      document.getElementById('change-avatar-btn').addEventListener('click', handleAvatarUpload);
+      document.getElementById('change-avatar-btn-profile').addEventListener('click', handleAvatarUpload);
+      
+      document.getElementById('remove-avatar-btn').addEventListener('click', async () => {
+        const { error } = await supabase.from('profiles').update({ avatar_url: null }).eq('id', user.id);
+        if (!error) {
+          const fallback = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile?.full_name || 'User')}&background=e5e7eb&color=6b7280&size=160&font-size=0.4`;
+          document.getElementById('user-avatar').src = fallback;
+          document.getElementById('profile-avatar').src = fallback;
+          document.getElementById('remove-avatar-btn').style.display = 'none';
+          showToast('Profile photo removed', 'info');
+        }
+      });
+
+      // ---- ORDERS ----
+      const { data: orders } = await supabase
+        .from('orders')
+        .select(`*, order_items(*, products(name))`)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false });
+
       const ordersEl = document.getElementById('orders-list');
       if (!orders || orders.length === 0) {
-        ordersEl.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>No orders yet</h3><p class="text-muted mb-4">Your orders will appear here</p><a href="./shop.html" class="btn btn-primary">Start Shopping</a></div>`;
+        ordersEl.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>No orders yet</h3><p class="text-muted" style="margin:0.5rem 0 1.5rem;">Your orders will appear here</p><a href="./shop.html" class="btn btn-primary">Start Shopping</a></div>`;
       } else {
         ordersEl.innerHTML = orders.map(o => `
           <div class="order-card">
             <div class="order-header">
-              <div><div style="font-weight:600;font-size:0.85rem;color:var(--color-text-muted);">ORDER #${o.id.substring(0,8).toUpperCase()}</div>
-              <div style="font-size:0.8rem;color:var(--color-text-muted);">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div></div>
+              <div>
+                <div style="font-weight:700; font-size:0.85rem;">ORDER #${o.id.substring(0,8).toUpperCase()}</div>
+                <div class="order-meta">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div>
+              </div>
               <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span>
             </div>
-            <div style="font-size:0.85rem;color:var(--color-text-muted);margin-bottom:0.5rem;">${o.order_items?.length || 0} item(s)</div>
-            <div style="font-weight:700;font-size:1.1rem;">₹${parseFloat(o.total).toLocaleString('en-IN')}</div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span class="text-muted" style="font-size:0.85rem;">${o.order_items?.length || 0} item(s)</span>
+              <span style="font-weight:700; font-size:1.05rem;">₹${parseFloat(o.total).toLocaleString('en-IN')}</span>
+            </div>
           </div>
         `).join('');
       }
 
-      // Wishlist
-      const { data: wl } = await supabase.from('wishlist').select('product_id, products(*, product_media(url, sort_order))').eq('user_id', user.id);
+      // ---- WISHLIST ----
+      const { data: wl } = await supabase
+        .from('wishlist')
+        .select('product_id, products(*, product_media(url, sort_order))')
+        .eq('user_id', user.id);
+
       const wlGrid = document.getElementById('wishlist-grid');
       if (!wl || wl.length === 0) {
-        wlGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">❤️</div><h3>Wishlist is empty</h3><p class="text-muted mb-4">Save items you love for later</p><a href="./shop.html" class="btn btn-primary">Browse Products</a></div>`;
+        wlGrid.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">❤️</div><h3>Wishlist is empty</h3><p class="text-muted" style="margin:0.5rem 0 1.5rem;">Save items you love for later</p><a href="./shop.html" class="btn btn-primary">Browse Products</a></div>`;
       } else {
         const prods = wl.map(w => { const p = w.products; if (!p) return null; p.main_image_url = p.product_media?.sort((a,b)=>a.sort_order-b.sort_order)[0]?.url || 'https://placehold.co/400x500?text=No+Image'; p.hover_image_url = p.main_image_url; return p; }).filter(Boolean);
         renderProductCards(prods, 'wishlist-grid');
       }
 
-      // Addresses
+      // ---- ADDRESSES ----
       async function loadAddresses() {
         const { data: addrs } = await supabase.from('addresses').select('*').eq('user_id', user.id).order('is_default', { ascending: false });
         const el = document.getElementById('addresses-list');
         if (!addrs || addrs.length === 0) {
-          el.innerHTML = `<p class="text-muted">No saved addresses. Add one below.</p>`;
+          el.innerHTML = `<div class="empty-state" style="grid-column:1/-1;"><div class="icon">📍</div><h3>No addresses saved</h3><p class="text-muted" style="margin:0.5rem 0 0;">Add a delivery address to get started.</p></div>`;
           return;
         }
         el.innerHTML = addrs.map(a => `
-          <div class="address-card ${a.is_default ? 'default' : ''}" style="margin-bottom:1rem;">
-            ${a.is_default ? '<span style="font-size:0.72rem;color:var(--color-accent);font-weight:600;">DEFAULT</span>' : ''}
-            <div style="font-weight:600;">${a.name}</div>
-            <div class="text-muted" style="font-size:0.875rem;">${a.line1}${a.line2 ? ', ' + a.line2 : ''}, ${a.city}, ${a.state} - ${a.pincode}</div>
-            <div class="text-muted" style="font-size:0.875rem;">📞 ${a.phone}</div>
-            <div style="margin-top:0.75rem;display:flex;gap:0.5rem;">
+          <div class="address-card ${a.is_default ? 'default' : ''}">
+            ${a.is_default ? '<div style="font-size:0.68rem; color:var(--color-accent); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.5rem;">✓ Default</div>' : ''}
+            <div style="font-weight:600; margin-bottom:0.25rem;">${a.name}</div>
+            <div class="text-muted" style="font-size:0.85rem; line-height:1.5;">${a.line1}${a.line2 ? ', ' + a.line2 : ''}<br>${a.city}, ${a.state} - ${a.pincode}</div>
+            <div class="text-muted" style="font-size:0.85rem; margin-top:0.25rem;">📞 ${a.phone}</div>
+            <div style="margin-top:0.75rem; display:flex; gap:0.5rem; flex-wrap:wrap;">
               ${!a.is_default ? `<button class="btn btn-outline btn-sm" onclick="setDefault('${a.id}')">Set Default</button>` : ''}
-              <button class="btn btn-outline btn-sm" onclick="deleteAddr('${a.id}')" style="color:var(--color-danger);">Delete</button>
+              <button class="btn btn-outline btn-sm" onclick="deleteAddr('${a.id}')" style="color:var(--color-danger); border-color:var(--color-danger);">Delete</button>
             </div>
           </div>
         `).join('');
@@ -219,9 +374,11 @@
 
       document.getElementById('add-address-btn').addEventListener('click', () => {
         document.getElementById('address-form').style.display = 'block';
+        document.getElementById('add-address-btn').style.display = 'none';
       });
       document.getElementById('cancel-address-btn').addEventListener('click', () => {
         document.getElementById('address-form').style.display = 'none';
+        document.getElementById('add-address-btn').style.display = 'inline-flex';
       });
       document.getElementById('address-form').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -239,6 +396,7 @@
         if (error) { showToast('Error saving address', 'error'); return; }
         document.getElementById('address-form').reset();
         document.getElementById('address-form').style.display = 'none';
+        document.getElementById('add-address-btn').style.display = 'inline-flex';
         showToast('Address saved!', 'success');
         loadAddresses();
       });

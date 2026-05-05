@@ -2,47 +2,64 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Checkout - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <!-- Razorpay script -->
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <style>
+    .checkout-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+    @media (min-width: 768px) { .checkout-layout { grid-template-columns: 1.5fr 1fr; } }
+
+    .checkout-card { background: white; border: 1.5px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.25rem; margin-bottom: 1.5rem; }
+    @media (min-width: 640px) { .checkout-card { padding: 1.5rem; } }
+
+    .addr-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 640px) { .addr-grid { grid-template-columns: 1fr 1fr; } }
+
+    .addr-item { padding: 1rem; border: 2px solid var(--color-border); border-radius: var(--radius-md); cursor: pointer; transition: all 0.2s; }
+    .addr-item:hover { border-color: var(--color-accent); }
+    .addr-item.selected { border-color: var(--color-accent); background: rgba(37,99,235,0.03); }
+
+    .form-row { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 480px) { .form-row { grid-template-columns: 1fr 1fr; } }
+
+    .summary-sticky { position: sticky; top: 5rem; height: fit-content; }
+  </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="logo">My Store</a>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8">
-    <h1 class="mb-4">Checkout</h1>
+  <main class="container section">
+    <h1 style="margin-bottom: 1.5rem; font-size: clamp(1.25rem, 4vw, 1.75rem);">Checkout</h1>
     
-    <div class="d-flex gap-4" style="flex-wrap: wrap;">
+    <div class="checkout-layout">
       
       <!-- Delivery Details -->
-      <div style="flex: 2; min-width: 300px;">
-        <div class="product-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-          <h2 class="mb-4">Delivery Address</h2>
-          <div id="address-list" class="mb-4 d-flex gap-4" style="flex-wrap:wrap;">
+      <div>
+        <div class="checkout-card">
+          <h2 style="font-size: 1.1rem; margin-bottom: 1.25rem;">Delivery Address</h2>
+          <div id="address-list" class="addr-grid" style="margin-bottom: 1rem;">
             Loading addresses...
           </div>
           
-          <button class="btn btn-outline" id="show-new-address-btn">+ Add New Address</button>
+          <button class="btn btn-outline btn-sm" id="show-new-address-btn">+ Add New Address</button>
           
-          <div id="new-address-form" style="display: none; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--color-border);">
-            <h3 class="mb-4">New Address</h3>
+          <div id="new-address-form" style="display: none; margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid var(--color-border);">
+            <h3 style="font-size: 1rem; margin-bottom: 1rem;">New Address</h3>
             <form id="address-form">
-              <div class="form-group"><label class="form-label">Name</label><input type="text" id="addr-name" class="form-control" required></div>
-              <div class="form-group"><label class="form-label">Line 1</label><input type="text" id="addr-line1" class="form-control" required></div>
-              <div class="form-group"><label class="form-label">Line 2</label><input type="text" id="addr-line2" class="form-control"></div>
-              <div class="d-flex gap-4">
-                <div class="form-group" style="flex:1;"><label class="form-label">City</label><input type="text" id="addr-city" class="form-control" required></div>
-                <div class="form-group" style="flex:1;"><label class="form-label">State</label><input type="text" id="addr-state" class="form-control" required></div>
+              <div class="form-row" style="margin-bottom: 1rem;">
+                <div class="form-group"><label class="form-label">Name</label><input type="text" id="addr-name" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">Phone</label><input type="text" id="addr-phone" class="form-control" required></div>
               </div>
-              <div class="d-flex gap-4">
-                <div class="form-group" style="flex:1;"><label class="form-label">Pincode</label><input type="text" id="addr-pincode" class="form-control" required></div>
-                <div class="form-group" style="flex:1;"><label class="form-label">Phone</label><input type="text" id="addr-phone" class="form-control" required></div>
+              <div class="form-group"><label class="form-label">Address Line 1</label><input type="text" id="addr-line1" class="form-control" required></div>
+              <div class="form-group"><label class="form-label">Address Line 2</label><input type="text" id="addr-line2" class="form-control"></div>
+              <div class="form-row" style="margin-bottom: 1rem;">
+                <div class="form-group"><label class="form-label">City</label><input type="text" id="addr-city" class="form-control" required></div>
+                <div class="form-group"><label class="form-label">State</label><input type="text" id="addr-state" class="form-control" required></div>
               </div>
+              <div class="form-group"><label class="form-label">Pincode</label><input type="text" id="addr-pincode" class="form-control" required style="max-width: 200px;"></div>
               <button type="submit" class="btn btn-primary mt-2">Save Address</button>
             </form>
           </div>
@@ -50,48 +67,53 @@
       </div>
 
       <!-- Order Summary -->
-      <div style="flex: 1; min-width: 300px;">
-        <div class="product-card" style="padding: 1.5rem;">
-          <h3 class="mb-4">Order Summary</h3>
-          <div id="checkout-items" class="mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
-            <!-- Items filled by JS -->
-          </div>
+      <div>
+        <div class="checkout-card summary-sticky">
+          <h3 style="font-size: 1.1rem; margin-bottom: 1rem;">Order Summary</h3>
+          <div id="checkout-items" style="margin-bottom: 1rem; padding-bottom: 1rem; border-bottom: 1px solid var(--color-border);"></div>
           
-          <div class="d-flex justify-between mb-2">
+          <div class="d-flex justify-between mb-2" style="font-size: 0.9rem;">
             <span class="text-muted">Subtotal</span>
             <span class="fw-bold" id="summary-subtotal">₹0</span>
           </div>
-          <div class="d-flex justify-between mb-2">
+          <div class="d-flex justify-between mb-2" style="font-size: 0.9rem;">
             <span class="text-muted">Shipping</span>
             <span class="fw-bold" id="summary-shipping">₹0</span>
           </div>
-          <div class="d-flex justify-between mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
+          <div class="d-flex justify-between mb-4" style="font-size: 0.9rem;">
             <span class="text-muted text-success" id="summary-discount-label" style="display:none;">Discount</span>
             <span class="fw-bold text-success" id="summary-discount" style="display:none;">-₹0</span>
           </div>
           
-          <div class="form-group d-flex gap-2 mb-4">
-            <input type="text" id="coupon-code" class="form-control" placeholder="Coupon Code">
-            <button class="btn btn-outline" id="apply-coupon-btn">Apply</button>
+          <div class="form-group d-flex gap-2 mb-4" style="flex-wrap: wrap;">
+            <input type="text" id="coupon-code" class="form-control" placeholder="Coupon Code" style="flex: 1; min-width: 120px;">
+            <button class="btn btn-outline" id="apply-coupon-btn" style="white-space: nowrap;">Apply</button>
           </div>
 
-          <div class="d-flex justify-between mb-4" style="font-size: 1.25rem;">
-            <span class="fw-bold">Total</span>
-            <span class="fw-bold" id="summary-total">₹0</span>
+          <div class="d-flex justify-between mb-4" style="padding-top: 1rem; border-top: 1px solid var(--color-border);">
+            <span class="fw-bold" style="font-size: 1.15rem;">Total</span>
+            <span class="fw-bold" id="summary-total" style="font-size: 1.15rem; color: var(--color-accent);">₹0</span>
           </div>
-          <button class="btn btn-primary btn-block" id="pay-now-btn">Pay Now</button>
+          <button class="btn btn-primary btn-block" id="pay-now-btn" style="font-size: 1rem; padding: 0.9rem;">Pay Now</button>
         </div>
       </div>
       
     </div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
     import { supabase } from './js/supabase.js';
-    import { initAuth, requireAuth, getCurrentUser } from './js/auth.js';
+    import { requireAuth, getCurrentUser } from './js/auth.js';
     import { getCart, getCartTotal } from './js/cart.js';
     import { processCheckout } from './js/checkout.js';
     import { showToast } from './js/toast.js';
+
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
 
     let addresses = [];
     let selectedAddressId = null;
@@ -99,7 +121,7 @@
     let settings = {};
 
     async function init() {
-      await initAuth();
+      await initPage();
       requireAuth();
       
       const cart = getCart();
@@ -164,11 +186,10 @@
       } else {
         selectedAddressId = addresses[0].id;
         container.innerHTML = addresses.map(a => `
-          <div class="product-card ${a.id === selectedAddressId ? 'selected-addr' : ''}" 
-               style="padding: 1rem; width: 100%; max-width: 300px; cursor: pointer; border: 2px solid ${a.id === selectedAddressId ? 'var(--color-accent)' : 'var(--color-border)'}"
+          <div class="addr-item ${a.id === selectedAddressId ? 'selected' : ''}" 
                onclick="window.selectAddress('${a.id}')" id="addr-card-${a.id}">
-            <div class="fw-bold mb-2">${a.name}</div>
-            <div class="text-muted text-sm">${a.line1}, ${a.line2 ? a.line2+',' : ''}<br>${a.city}, ${a.state} ${a.pincode}<br>${a.phone}</div>
+            <div class="fw-bold" style="margin-bottom: 0.35rem;">${a.name}</div>
+            <div class="text-muted" style="font-size: 0.85rem; line-height: 1.5;">${a.line1}${a.line2 ? ', ' + a.line2 : ''}<br>${a.city}, ${a.state} ${a.pincode}<br>📞 ${a.phone}</div>
           </div>
         `).join('');
       }
@@ -176,13 +197,9 @@
 
     window.selectAddress = function(id) {
       selectedAddressId = id;
-      document.querySelectorAll('.selected-addr').forEach(el => {
-        el.classList.remove('selected-addr');
-        el.style.borderColor = 'var(--color-border)';
-      });
+      document.querySelectorAll('.addr-item').forEach(el => el.classList.remove('selected'));
       const card = document.getElementById(`addr-card-${id}`);
-      card.classList.add('selected-addr');
-      card.style.borderColor = 'var(--color-accent)';
+      if (card) card.classList.add('selected');
     }
 
     function renderOrderSummary() {
@@ -190,9 +207,9 @@
       const subtotal = getCartTotal();
       
       document.getElementById('checkout-items').innerHTML = cart.map(item => `
-        <div class="d-flex justify-between mb-2">
-          <span style="font-size:0.875rem;">${item.quantity}x ${item.name} ${item.variant_label ? `(${item.variant_label})` : ''}</span>
-          <span class="fw-bold">₹${item.price * item.quantity}</span>
+        <div class="d-flex justify-between mb-2" style="gap: 0.5rem;">
+          <span style="font-size:0.85rem; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.quantity}× ${item.name} ${item.variant_label ? `(${item.variant_label})` : ''}</span>
+          <span class="fw-bold" style="font-size: 0.85rem; flex-shrink: 0;">₹${item.price * item.quantity}</span>
         </div>
       `).join('');
 

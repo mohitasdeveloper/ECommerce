@@ -2,70 +2,53 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Order Success - My Store</title>
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="logo">My Store</a>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8 text-center" style="max-width: 600px;">
+  <main class="container section text-center" style="max-width: 600px; padding-top: 3rem; padding-bottom: 3rem;">
     <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--color-success)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin: 0 auto 2rem;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
     
-    <h1 class="mb-4">Thank You for Your Order!</h1>
-    <p class="text-muted mb-4">Your order has been placed successfully and is being processed.</p>
+    <h1 style="margin-bottom: 1rem; font-size: clamp(1.5rem, 4vw, 2rem);">Thank You for Your Order!</h1>
+    <p class="text-muted" style="margin-bottom: 1.5rem; font-size: 1rem; line-height: 1.6;">Your order has been placed successfully and is being processed.</p>
     
-    <div class="product-card" style="padding: 2rem; margin-bottom: 2rem; text-align: left;">
-      <h3 class="mb-2">Order Summary</h3>
-      <p class="text-muted mb-4">Order ID: <span id="order-id" class="fw-bold"></span></p>
-      
-      <div id="order-items" class="mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);"></div>
-      
-      <div class="d-flex justify-between fw-bold" style="font-size: 1.25rem;">
-        <span>Total Paid</span>
-        <span id="order-total"></span>
-      </div>
+    <div id="order-details" style="background:var(--color-bg-secondary); padding: 1.5rem; border-radius: var(--radius-lg); margin-bottom: 2rem; text-align: left;">
+      <div class="d-flex justify-between mb-2"><span class="text-muted">Order ID</span><span class="fw-bold" id="order-id">—</span></div>
+      <div class="d-flex justify-between mb-2"><span class="text-muted">Total</span><span class="fw-bold" id="order-total">—</span></div>
+      <div class="d-flex justify-between"><span class="text-muted">Status</span><span class="badge-stock in-stock" id="order-status">Processing</span></div>
     </div>
-    
-    <a href="./shop.html" class="btn btn-primary">Continue Shopping</a>
-    <a href="./account.html" class="btn btn-outline ml-2">View My Orders</a>
+
+    <div style="display:flex; gap: 1rem; flex-wrap: wrap; justify-content: center;">
+      <a href="./account.html#orders" class="btn btn-primary">View My Orders</a>
+      <a href="./shop.html" class="btn btn-outline">Continue Shopping</a>
+    </div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
-    import { initAuth } from './js/auth.js';
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
     import { supabase } from './js/supabase.js';
 
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
+
     async function init() {
-      await initAuth();
+      await initPage();
+      
       const orderId = new URLSearchParams(window.location.search).get('order_id');
-      if (!orderId) {
-        window.location.href = './';
-        return;
-      }
-
-      document.getElementById('order-id').textContent = orderId.split('-')[0].toUpperCase();
-
-      const { data: order } = await supabase
-        .from('orders')
-        .select('*, order_items(*)')
-        .eq('id', orderId)
-        .single();
-
-      if (order) {
-        document.getElementById('order-total').textContent = `₹${order.total}`;
-        
-        document.getElementById('order-items').innerHTML = order.order_items.map(item => {
-          const snap = item.product_snapshot || {};
-          return `
-            <div class="d-flex justify-between mb-2">
-              <span>${item.quantity}x ${snap.name || 'Product'} ${snap.variant_label ? `(${snap.variant_label})` : ''}</span>
-              <span class="fw-bold">₹${item.price_at_purchase * item.quantity}</span>
-            </div>
-          `;
-        }).join('');
+      if (orderId) {
+        document.getElementById('order-id').textContent = '#' + orderId.substring(0,8).toUpperCase();
+        const { data: order } = await supabase.from('orders').select('*').eq('id', orderId).single();
+        if (order) {
+          document.getElementById('order-total').textContent = `₹${parseFloat(order.total).toLocaleString('en-IN')}`;
+          document.getElementById('order-status').textContent = order.status.charAt(0).toUpperCase() + order.status.slice(1);
+        }
       }
     }
 

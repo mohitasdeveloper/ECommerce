@@ -2,69 +2,91 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Product Details - My Store</title>
+  <meta name="description" content="View product details at My Store">
   <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     .product-layout { display: grid; gap: 2rem; grid-template-columns: 1fr; }
-    @media(min-width: 768px) { .product-layout { grid-template-columns: 1fr 1fr; } }
-    .gallery-main { width: 100%; aspect-ratio: 1; background: var(--color-bg-secondary); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 1rem; }
+    @media(min-width: 768px) { .product-layout { grid-template-columns: 1fr 1fr; gap: 3rem; } }
+    
+    .gallery-main { width: 100%; aspect-ratio: 1; background: var(--color-bg-secondary); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 0.75rem; }
     .gallery-main img { width: 100%; height: 100%; object-fit: cover; }
-    .gallery-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; }
-    .gallery-thumbs img { width: 80px; height: 80px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; }
+    .gallery-thumbs { display: flex; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.25rem; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .gallery-thumbs::-webkit-scrollbar { display: none; }
+    .gallery-thumbs img { width: 64px; height: 64px; object-fit: cover; border-radius: var(--radius-sm); cursor: pointer; border: 2px solid transparent; flex-shrink: 0; }
+    @media(min-width: 768px) { .gallery-thumbs img { width: 80px; height: 80px; } }
     .gallery-thumbs img.active { border-color: var(--color-accent); }
-    .option-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: white; margin-right: 0.5rem; margin-bottom: 0.5rem; }
-    .option-btn.selected { border-color: var(--color-accent); background: rgba(37, 99, 235, 0.1); color: var(--color-accent); }
-    .option-swatch { width: 30px; height: 30px; border-radius: 50%; border: 2px solid transparent; display: inline-block; cursor: pointer; margin-right: 0.5rem; box-shadow: var(--shadow-sm); }
-    .option-swatch.selected { border-color: var(--color-accent); transform: scale(1.1); }
+    
+    .option-btn { padding: 0.5rem 1rem; border: 1px solid var(--color-border); border-radius: var(--radius-sm); background: white; margin-right: 0.5rem; margin-bottom: 0.5rem; min-height: 44px; cursor: pointer; transition: all 0.2s; }
+    .option-btn:hover { border-color: var(--color-accent); }
+    .option-btn.selected { border-color: var(--color-accent); background: rgba(37, 99, 235, 0.1); color: var(--color-accent); font-weight: 600; }
+    .option-swatch { width: 36px; height: 36px; border-radius: 50%; border: 3px solid transparent; display: inline-block; cursor: pointer; margin-right: 0.5rem; box-shadow: var(--shadow-sm); transition: all 0.2s; }
+    .option-swatch:hover { transform: scale(1.1); }
+    .option-swatch.selected { border-color: var(--color-accent); transform: scale(1.15); }
+
+    .product-info-section { padding-top: 0.5rem; }
+    @media(min-width: 768px) { .product-info-section { padding-top: 0; } }
+
+    .qty-control { display: flex; align-items: center; border: 1.5px solid var(--color-border); border-radius: var(--radius-md); overflow: hidden; width: fit-content; }
+    .qty-control button { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; background: transparent; border: none; cursor: pointer; }
+    .qty-control button:active { background: var(--color-bg-secondary); }
+    .qty-control input { width: 48px; text-align: center; border: none; outline: none; font-weight: 600; font-size: 1rem; -moz-appearance: textfield; }
+    .qty-control input::-webkit-outer-spin-button,
+    .qty-control input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .product-actions { display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap; }
+    @media(max-width: 479px) { .product-actions { flex-direction: column; } .product-actions .btn { width: 100%; } }
   </style>
 </head>
 <body>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a href="./" class="logo">My Store</a>
-      <div class="header-actions">
-        <a href="./cart.html" class="action-btn">Cart (<span id="cart-count">0</span>)</a>
-      </div>
-    </div>
-  </header>
+  <div id="header-placeholder"></div>
 
-  <main class="container py-8" id="product-container">
-    <div class="text-center py-8">Loading product...</div>
+  <main class="container section" id="product-container">
+    <div class="text-center" style="padding: 4rem 0;">Loading product...</div>
   </main>
 
+  <div id="footer-placeholder"></div>
+
   <script type="module">
-    import { initAuth } from './js/auth.js';
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
     import { fetchProductDetails, findMatchingVariant } from './js/variants.js';
     import { addToCart } from './js/cart.js';
     import { isInWishlist, toggleWishlist, fetchWishlist } from './js/wishlist.js';
+
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
 
     let product = null;
     let selectionState = {};
     let currentVariant = null;
 
     async function init() {
-      await initAuth();
+      await initPage();
       await fetchWishlist();
 
       const slug = new URLSearchParams(window.location.search).get('slug');
       if (!slug) {
-        document.getElementById('product-container').innerHTML = 'Product not found.';
+        document.getElementById('product-container').innerHTML = '<div class="text-center" style="padding:4rem 0;"><h2>Product not found</h2><p class="text-muted mt-2">The product you\'re looking for doesn\'t exist.</p><a href="./shop.html" class="btn btn-primary mt-4">Browse Products</a></div>';
         return;
       }
 
       product = await fetchProductDetails(slug);
       if (!product) {
-        document.getElementById('product-container').innerHTML = 'Product not found.';
+        document.getElementById('product-container').innerHTML = '<div class="text-center" style="padding:4rem 0;"><h2>Product not found</h2><p class="text-muted mt-2">The product you\'re looking for doesn\'t exist.</p><a href="./shop.html" class="btn btn-primary mt-4">Browse Products</a></div>';
         return;
       }
 
+      document.title = `${product.name} - My Store`;
       renderProduct();
     }
 
     function renderProduct() {
       const isWished = isInWishlist(product.id);
       
-      let mainMedia = product.media && product.media.length > 0 ? product.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/800x800';
+      let mainMedia = product.media && product.media.length > 0 ? product.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/800x800?text=No+Image';
 
       let html = `
         <div class="product-layout">
@@ -73,19 +95,19 @@
             <div class="gallery-main"><img id="main-img" src="${mainMedia}" alt="${product.name}"></div>
             <div class="gallery-thumbs">
               ${(product.media || []).sort((a,b)=>a.sort_order-b.sort_order).map((m, i) => `
-                <img src="${m.url}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${m.url}', this)">
+                <img src="${m.url}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${m.url}', this)" alt="Thumbnail ${i+1}">
               `).join('')}
             </div>
           </div>
 
           <!-- Info -->
-          <div>
-            <div class="product-category">${product.category ? product.category.name : ''}</div>
-            <h1 style="margin-bottom: 0.5rem;">${product.name}</h1>
+          <div class="product-info-section">
+            <div class="product-category" style="margin-bottom:0.5rem;">${product.category ? product.category.name : ''}</div>
+            <h1 style="margin-bottom: 0.75rem; font-size: clamp(1.25rem, 4vw, 2rem);">${product.name}</h1>
             
-            <div class="d-flex align-center gap-4 mb-4" style="font-size: 1.5rem;">
-              <span class="fw-bold" id="display-price">₹${product.price}</span>
-              ${product.compare_price ? `<span class="compare-price text-muted" id="display-compare" style="font-size: 1.25rem;">₹${product.compare_price}</span>` : '<span class="compare-price text-muted" id="display-compare" style="font-size: 1.25rem;"></span>'}
+            <div class="d-flex align-center gap-2 mb-4" style="flex-wrap:wrap;">
+              <span class="fw-bold" id="display-price" style="font-size: clamp(1.25rem, 4vw, 1.75rem);">₹${product.price}</span>
+              ${product.compare_price ? `<span class="compare-price text-muted" id="display-compare" style="font-size: 1.1rem;">₹${product.compare_price}</span>` : '<span class="compare-price text-muted" id="display-compare" style="font-size: 1.1rem;"></span>'}
               <span class="badge-stock ${product.stock_status === 'in_stock' ? 'in-stock' : 'out-of-stock'}" id="display-stock">${product.stock_status === 'in_stock' ? 'In Stock' : 'Out of Stock'}</span>
             </div>
 
@@ -94,21 +116,21 @@
               ${renderOptions(product.option_types)}
             </div>
 
-            <div class="d-flex gap-4 align-center mb-4">
-              <div class="form-control" style="width: 100px; display:flex;">
-                <button type="button" onclick="document.getElementById('qty').stepDown()" style="padding: 0 0.5rem;">-</button>
-                <input type="number" id="qty" value="1" min="1" style="width: 100%; border:none; text-align:center; outline:none;">
-                <button type="button" onclick="document.getElementById('qty').stepUp()" style="padding: 0 0.5rem;">+</button>
+            <div class="product-actions mb-4">
+              <div class="qty-control">
+                <button type="button" onclick="document.getElementById('qty').stepDown()" aria-label="Decrease">−</button>
+                <input type="number" id="qty" value="1" min="1">
+                <button type="button" onclick="document.getElementById('qty').stepUp()" aria-label="Increase">+</button>
               </div>
-              <button class="btn btn-primary" id="add-to-cart-btn" style="flex-grow:1;">Add to Cart</button>
-              <button class="btn btn-outline" id="wishlist-btn" aria-label="Wishlist" style="padding: 0.75rem;">
+              <button class="btn btn-primary" id="add-to-cart-btn" style="flex-grow:1; min-width: 160px;">Add to Cart</button>
+              <button class="btn btn-outline" id="wishlist-btn" aria-label="Wishlist" style="padding: 0.75rem; flex-shrink: 0;">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="${isWished ? 'var(--color-danger)' : 'none'}" stroke="${isWished ? 'var(--color-danger)' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
               </button>
             </div>
 
-            <div class="mt-8">
-              <h3>Description</h3>
-              <p class="text-muted" style="white-space: pre-wrap;">${product.description || ''}</p>
+            <div style="border-top: 1px solid var(--color-border); padding-top: 1.5rem; margin-top: 1rem;">
+              <h3 style="margin-bottom: 0.75rem;">Description</h3>
+              <p class="text-muted" style="white-space: pre-wrap; line-height: 1.7; font-size: 0.95rem;">${product.description || 'No description available.'}</p>
             </div>
           </div>
         </div>
@@ -154,7 +176,7 @@
         } else if (ot.display_type === 'swatch') {
           optionsHtml = ot.values.map(v => `<div class="option-swatch" style="background-color: ${v.color_hex}" title="${v.value}" onclick="window.selectOption('${ot.id}', '${v.id}')" id="opt-${v.id}"></div>`).join('');
         } else if (ot.display_type === 'dropdown') {
-          optionsHtml = `<select class="form-control" id="select-${ot.id}">
+          optionsHtml = `<select class="form-control" id="select-${ot.id}" style="max-width: 280px;">
             <option value="">Select ${ot.name}</option>
             ${ot.values.map(v => `<option value="${v.id}">${v.value}</option>`).join('')}
           </select>`;
@@ -224,10 +246,7 @@
           addBtn.disabled = true;
           addBtn.textContent = 'Out of Stock';
         }
-
-        // Update image if variant has one (placeholder for media mapping)
       } else {
-        // Combination not found
         stockEl.textContent = 'Unavailable';
         stockEl.className = 'badge-stock out-of-stock';
         addBtn.disabled = true;
@@ -240,7 +259,6 @@
       
       if (product.option_types && product.option_types.length > 0) {
         if (!currentVariant) return;
-        // Build label
         const label = product.option_types.map(ot => {
           const val = ot.values.find(v => v.id === selectionState[ot.id]);
           return val ? val.value : '';

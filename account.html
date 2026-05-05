@@ -7,10 +7,13 @@
   <link rel="stylesheet" href="./css/main.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .account-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
-    @media (min-width: 768px) { .account-layout { grid-template-columns: 220px 1fr; } }
-    .account-nav { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; height: fit-content; position: sticky; top: 5rem; }
-    .account-nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.7rem 1rem; border-radius: var(--radius-md); font-size: 0.9rem; font-weight: 500; color: var(--color-text-muted); cursor: pointer; transition: all 0.2s; width: 100%; text-align: left; }
+    .account-layout { display: grid; grid-template-columns: 1fr; gap: 1.5rem; }
+    @media (min-width: 768px) { .account-layout { grid-template-columns: 220px 1fr; gap: 2rem; } }
+    .account-nav { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 0.75rem; height: fit-content; display: flex; gap: 0.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+    .account-nav::-webkit-scrollbar { display: none; }
+    @media (min-width: 768px) { .account-nav { flex-direction: column; position: sticky; top: 5rem; padding: 1rem; overflow-x: visible; } }
+    .account-nav-item { display: flex; align-items: center; gap: 0.6rem; padding: 0.6rem 0.85rem; border-radius: var(--radius-md); font-size: 0.85rem; font-weight: 500; color: var(--color-text-muted); cursor: pointer; transition: all 0.2s; white-space: nowrap; flex-shrink: 0; }
+    @media (min-width: 768px) { .account-nav-item { width: 100%; text-align: left; font-size: 0.9rem; padding: 0.7rem 1rem; } }
     .account-nav-item:hover { background: var(--color-bg-secondary); color: var(--color-text); }
     .account-nav-item.active { background: var(--color-accent); color: white; }
     .panel { display: none; } .panel.active { display: block; }
@@ -20,6 +23,11 @@
     .address-card.default { border-color: var(--color-accent); }
     .empty-state { text-align: center; padding: 3rem 1rem; }
     .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+    .addr-form-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 480px) { .addr-form-grid { grid-template-columns: 1fr 1fr; } }
+    .addr-form-grid-3 { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    @media (min-width: 480px) { .addr-form-grid-3 { grid-template-columns: 1fr 1fr; } }
+    @media (min-width: 768px) { .addr-form-grid-3 { grid-template-columns: 1fr 1fr 1fr; } }
   </style>
 </head>
 <body>
@@ -57,20 +65,20 @@
             <button class="btn btn-primary btn-sm" id="add-address-btn">+ Add Address</button>
           </div>
           <div id="addresses-list"></div>
-          <form id="address-form" style="display:none;background:var(--color-bg-secondary);border-radius:var(--radius-lg);padding:1.5rem;margin-top:1rem;">
-            <h3 style="margin-bottom:1rem;">New Address</h3>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;">
+          <form id="address-form" style="display:none;background:var(--color-bg-secondary);border-radius:var(--radius-lg);padding:1.25rem;margin-top:1rem;">
+            <h3 style="margin-bottom:1rem; font-size: 1rem;">New Address</h3>
+            <div class="addr-form-grid">
               <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="addr-name" required></div>
               <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="addr-phone" required></div>
             </div>
             <div class="form-group"><label class="form-label">Address Line 1</label><input class="form-control" id="addr-line1" required></div>
             <div class="form-group"><label class="form-label">Address Line 2 (Optional)</label><input class="form-control" id="addr-line2"></div>
-            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem;">
+            <div class="addr-form-grid-3">
               <div class="form-group"><label class="form-label">City</label><input class="form-control" id="addr-city" required></div>
               <div class="form-group"><label class="form-label">State</label><input class="form-control" id="addr-state" required></div>
               <div class="form-group"><label class="form-label">Pincode</label><input class="form-control" id="addr-pincode" required></div>
             </div>
-            <div style="display:flex;gap:1rem;">
+            <div style="display:flex;gap:1rem;flex-wrap:wrap;">
               <button type="submit" class="btn btn-primary">Save Address</button>
               <button type="button" class="btn btn-outline" id="cancel-address-btn">Cancel</button>
             </div>

@@ -126,7 +126,8 @@
     import { showToast } from '../js/toast.js';
     import { openUploadWidget } from '../js/cloudinary.js';
 
-    let heroSlides = [];
+    let allProducts = []; // just in case
+    window.heroSlides = [];
 
     async function init() {
       await initAuth();
@@ -154,7 +155,7 @@
       // Hero Slides
       document.getElementById('add-slide-btn').addEventListener('click', () => {
         openUploadWidget({}, (res) => {
-          heroSlides.push({ image_url: res.url, link_url: '' });
+          window.heroSlides.push({ image_url: res.url, link_url: '' });
           renderSlides();
         });
       });
@@ -175,7 +176,7 @@
         // Add slides JSON string
         updates.push({
           key: 'hero_slides',
-          value: JSON.stringify(heroSlides)
+          value: JSON.stringify(window.heroSlides)
         });
 
         try {
@@ -196,7 +197,7 @@
       if (data) {
         data.forEach(row => {
           if (row.key === 'hero_slides') {
-            try { heroSlides = JSON.parse(row.value) || []; } catch(e){ heroSlides = []; }
+            try { window.heroSlides = JSON.parse(row.value) || []; } catch(e){ window.heroSlides = []; }
             renderSlides();
           } else {
             const el = document.getElementById(`set-${row.key}`);
@@ -216,20 +217,20 @@
 
     function renderSlides() {
       const c = document.getElementById('slides-container');
-      if (heroSlides.length === 0) {
+      if (window.heroSlides.length === 0) {
         c.innerHTML = '<div class="text-muted text-center" style="padding:2rem; border:1px dashed var(--color-border); border-radius:var(--radius-md);">No slides added yet.</div>';
         return;
       }
 
-      c.innerHTML = heroSlides.map((slide, i) => `
+      c.innerHTML = window.heroSlides.map((slide, i) => `
         <div class="d-flex gap-4 align-center" style="border:1px solid var(--color-border); padding:1rem; border-radius:var(--radius-md); background:white;">
           <img src="${slide.image_url}" style="width:120px; height:60px; object-fit:cover; border-radius:var(--radius-sm); border:1px solid var(--color-border);">
           <div style="flex:1;">
-            <input type="text" class="form-control" placeholder="Optional Link URL (e.g. /shop.html?category=electronics)" value="${slide.link_url}" oninput="heroSlides[${i}].link_url=this.value">
+            <input type="text" class="form-control" placeholder="Optional Link URL (e.g. /shop.html?category=electronics)" value="${slide.link_url}" oninput="window.heroSlides[${i}].link_url=this.value">
           </div>
           <div class="d-flex flex-column gap-2">
             <button type="button" class="btn btn-outline btn-sm" onclick="window.moveSlideUp(${i})" ${i === 0 ? 'disabled' : ''}>↑</button>
-            <button type="button" class="btn btn-outline btn-sm" onclick="window.moveSlideDown(${i})" ${i === heroSlides.length - 1 ? 'disabled' : ''}>↓</button>
+            <button type="button" class="btn btn-outline btn-sm" onclick="window.moveSlideDown(${i})" ${i === window.heroSlides.length - 1 ? 'disabled' : ''}>↓</button>
           </div>
           <button type="button" class="btn btn-danger" onclick="window.removeSlide(${i})">Remove</button>
         </div>
@@ -238,22 +239,22 @@
 
     window.moveSlideUp = (idx) => {
       if(idx === 0) return;
-      const temp = heroSlides[idx - 1];
-      heroSlides[idx - 1] = heroSlides[idx];
-      heroSlides[idx] = temp;
+      const temp = window.heroSlides[idx - 1];
+      window.heroSlides[idx - 1] = window.heroSlides[idx];
+      window.heroSlides[idx] = temp;
       renderSlides();
     };
 
     window.moveSlideDown = (idx) => {
-      if(idx === heroSlides.length - 1) return;
-      const temp = heroSlides[idx + 1];
-      heroSlides[idx + 1] = heroSlides[idx];
-      heroSlides[idx] = temp;
+      if(idx === window.heroSlides.length - 1) return;
+      const temp = window.heroSlides[idx + 1];
+      window.heroSlides[idx + 1] = window.heroSlides[idx];
+      window.heroSlides[idx] = temp;
       renderSlides();
     };
 
     window.removeSlide = (idx) => {
-      heroSlides.splice(idx, 1);
+      window.heroSlides.splice(idx, 1);
       renderSlides();
     };
 

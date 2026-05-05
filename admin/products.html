@@ -219,9 +219,9 @@
 
     let allProducts = [];
     let uploadedMedia = [];
-    let optionTypes = [];
-    let generatedVariants = [];
-    let specs = [];
+    window.optionTypes = [];
+    window.generatedVariants = [];
+    window.specs = [];
 
     // Drag-and-drop state
     let draggedMediaIndex = null;
@@ -267,7 +267,7 @@
       // Variants Toggle
       document.getElementById('has-variants').addEventListener('change', (e) => {
         document.getElementById('variants-section').style.display = e.target.checked ? 'block' : 'none';
-        if (e.target.checked && optionTypes.length === 0) addOptionType();
+        if (e.target.checked && window.optionTypes.length === 0) addOptionType();
       });
 
       // Variant Builder Events
@@ -276,7 +276,7 @@
 
       // Specs
       document.getElementById('add-spec-btn').addEventListener('click', () => {
-        specs.push({ key: '', value: '' });
+        window.specs.push({ key: '', value: '' });
         renderSpecs();
       });
 
@@ -408,18 +408,18 @@
 
     /* --- VARIANTS SYSTEM --- */
     function addOptionType(data = { id: 'temp_' + Date.now(), name: '', display_type: 'button', values: [''] }) {
-      optionTypes.push(data);
+      window.optionTypes.push(data);
       renderOptionTypes();
     }
-    window.removeOptionType = (idx) => { optionTypes.splice(idx, 1); renderOptionTypes(); }
+    window.removeOptionType = (idx) => { window.optionTypes.splice(idx, 1); renderOptionTypes(); }
 
     function renderOptionTypes() {
       const c = document.getElementById('option-types-container');
-      c.innerHTML = optionTypes.map((ot, i) => `
+      c.innerHTML = window.optionTypes.map((ot, i) => `
         <div style="border:1px solid var(--color-border); padding:1rem; border-radius:var(--radius-sm); background:white;">
           <div class="d-flex gap-3 mb-3">
-            <input type="text" class="form-control" placeholder="Option Name (e.g. Size)" value="${ot.name}" oninput="optionTypes[${i}].name=this.value" style="flex:2;">
-            <select class="form-control" onchange="optionTypes[${i}].display_type=this.value" style="flex:1;">
+            <input type="text" class="form-control" placeholder="Option Name (e.g. Size)" value="${ot.name}" oninput="window.optionTypes[${i}].name=this.value" style="flex:2;">
+            <select class="form-control" onchange="window.optionTypes[${i}].display_type=this.value" style="flex:1;">
               <option value="button" ${ot.display_type==='button'?'selected':''}>Pill Buttons</option>
               <option value="swatch" ${ot.display_type==='swatch'?'selected':''}>Color Swatches</option>
               <option value="dropdown" ${ot.display_type==='dropdown'?'selected':''}>Dropdown</option>
@@ -430,22 +430,22 @@
             <span class="text-sm font-medium">Values:</span>
             ${ot.values.map((v, j) => `
               <div class="d-flex align-center" style="border:1px solid #ccc; border-radius:100px; padding-left:12px; overflow:hidden;">
-                <input type="text" value="${v}" oninput="optionTypes[${i}].values[${j}]=this.value" style="border:none; outline:none; width:80px; font-size:0.85rem; padding:6px 0;">
-                ${ot.display_type === 'swatch' ? `<input type="color" value="${ot.colors?.[j] || '#000000'}" onchange="if(!optionTypes[${i}].colors) optionTypes[${i}].colors=[]; optionTypes[${i}].colors[${j}]=this.value" style="width:24px;height:24px;border:none;padding:0;background:none;margin-right:4px;">` : ''}
-                <button type="button" onclick="optionTypes[${i}].values.splice(${j},1); renderOptionTypes();" style="background:var(--color-bg-secondary); border:none; padding:8px 12px; cursor:pointer;">✕</button>
+                <input type="text" value="${v}" oninput="window.optionTypes[${i}].values[${j}]=this.value" style="border:none; outline:none; width:80px; font-size:0.85rem; padding:6px 0;">
+                ${ot.display_type === 'swatch' ? `<input type="color" value="${ot.colors?.[j] || '#000000'}" onchange="if(!window.optionTypes[${i}].colors) window.optionTypes[${i}].colors=[]; window.optionTypes[${i}].colors[${j}]=this.value" style="width:24px;height:24px;border:none;padding:0;background:none;margin-right:4px;">` : ''}
+                <button type="button" onclick="window.optionTypes[${i}].values.splice(${j},1); renderOptionTypes();" style="background:var(--color-bg-secondary); border:none; padding:8px 12px; cursor:pointer;">✕</button>
               </div>
             `).join('')}
-            <button type="button" class="btn btn-sm btn-outline" style="border-radius:100px;" onclick="optionTypes[${i}].values.push(''); renderOptionTypes();">+ Value</button>
+            <button type="button" class="btn btn-sm btn-outline" style="border-radius:100px;" onclick="window.optionTypes[${i}].values.push(''); renderOptionTypes();">+ Value</button>
           </div>
         </div>
       `).join('');
       
-      document.getElementById('variants-table-container').style.display = optionTypes.length > 0 ? 'block' : 'none';
+      document.getElementById('variants-table-container').style.display = window.optionTypes.length > 0 ? 'block' : 'none';
     }
 
     function generateVariantCombinations() {
       // Filter out incomplete types/values
-      const validTypes = optionTypes.filter(ot => ot.name.trim() !== '' && ot.values.some(v => v.trim() !== ''));
+      const validTypes = window.optionTypes.filter(ot => ot.name.trim() !== '' && ot.values.some(v => v.trim() !== ''));
       if(validTypes.length === 0) return;
 
       const arraysToCombine = validTypes.map(ot => ot.values.filter(v => v.trim() !== '').map(v => ({ typeId: ot.id, typeName: ot.name, value: v })));
@@ -455,11 +455,11 @@
       const basePrice = document.getElementById('prod-price').value || 0;
       const baseCompare = document.getElementById('prod-compare').value || '';
 
-      generatedVariants = combinations.map(combo => {
+      window.generatedVariants = combinations.map(combo => {
         const label = combo.map(c => c.value).join(' / ');
         
         // Preserve existing data if it exists for this combination
-        const existing = generatedVariants.find(v => v.label === label);
+        const existing = window.generatedVariants.find(v => v.label === label);
         
         return {
           id: existing?.id || 'new_' + Math.random().toString(36).substr(2,9),
@@ -478,16 +478,16 @@
 
     function renderVariantsTable() {
       const tbody = document.getElementById('variants-tbody');
-      tbody.innerHTML = generatedVariants.map((v, i) => `
+      tbody.innerHTML = window.generatedVariants.map((v, i) => `
         <tr class="${!v.price ? 'variant-row-error' : ''}">
           <td class="fw-bold text-sm">${v.label}</td>
-          <td><input type="text" class="form-control" value="${v.sku}" oninput="generatedVariants[${i}].sku=this.value" placeholder="SKU"></td>
-          <td><input type="number" class="form-control" value="${v.price}" oninput="generatedVariants[${i}].price=this.value; renderVariantsTable();" placeholder="Price" required></td>
+          <td><input type="text" class="form-control" value="${v.sku}" oninput="window.generatedVariants[${i}].sku=this.value" placeholder="SKU"></td>
+          <td><input type="number" class="form-control" value="${v.price}" oninput="window.generatedVariants[${i}].price=this.value; renderVariantsTable();" placeholder="Price" required></td>
           <td>
-            <span class="toggle"><input type="checkbox" ${v.stock_status === 'in_stock' ? 'checked' : ''} onchange="generatedVariants[${i}].stock_status=this.checked?'in_stock':'out_of_stock'"><span class="toggle-slider"></span></span>
+            <span class="toggle"><input type="checkbox" ${v.stock_status === 'in_stock' ? 'checked' : ''} onchange="window.generatedVariants[${i}].stock_status=this.checked?'in_stock':'out_of_stock'"><span class="toggle-slider"></span></span>
           </td>
           <td>
-            <select class="form-control" onchange="generatedVariants[${i}].media_id=this.value">
+            <select class="form-control" onchange="window.generatedVariants[${i}].media_id=this.value">
               <option value="">No specific image</option>
               ${uploadedMedia.map((m, midx) => `<option value="${m.id}" ${v.media_id === m.id ? 'selected' : ''}>Image ${midx+1}</option>`).join('')}
             </select>
@@ -499,11 +499,11 @@
     /* --- SPECS BUILDER --- */
     function renderSpecs() {
       const c = document.getElementById('specs-container');
-      c.innerHTML = specs.map((s, i) => `
+      c.innerHTML = window.specs.map((s, i) => `
         <div class="spec-row">
-          <input type="text" class="form-control" placeholder="Key (e.g. Material)" value="${s.key}" oninput="specs[${i}].key=this.value" style="flex:1;">
-          <input type="text" class="form-control" placeholder="Value (e.g. 100% Cotton)" value="${s.value}" oninput="specs[${i}].value=this.value" style="flex:2;">
-          <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger); padding:0.4rem 0.75rem;" onclick="specs.splice(${i},1); renderSpecs();">✕</button>
+          <input type="text" class="form-control" placeholder="Key (e.g. Material)" value="${s.key}" oninput="window.specs[${i}].key=this.value" style="flex:1;">
+          <input type="text" class="form-control" placeholder="Value (e.g. 100% Cotton)" value="${s.value}" oninput="window.specs[${i}].value=this.value" style="flex:2;">
+          <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger); padding:0.4rem 0.75rem;" onclick="window.specs.splice(${i},1); renderSpecs();">✕</button>
         </div>
       `).join('');
     }
@@ -515,9 +515,9 @@
       document.getElementById('modal-title').textContent = 'Add Product';
       
       uploadedMedia = []; renderMediaGallery();
-      optionTypes = []; renderOptionTypes();
-      generatedVariants = []; renderVariantsTable();
-      specs = []; renderSpecs();
+      window.optionTypes = []; renderOptionTypes();
+      window.generatedVariants = []; renderVariantsTable();
+      window.specs = []; renderSpecs();
       
       document.getElementById('has-variants').checked = false;
       document.getElementById('variants-section').style.display = 'none';
@@ -562,14 +562,14 @@
         document.getElementById('detail-shipping').value = det.shipping_policy || '';
         document.getElementById('detail-return').value = det.return_policy || '';
         if (det.specifications) {
-          specs = Array.isArray(det.specifications) ? det.specifications : Object.entries(det.specifications).map(([k,v])=>({key:k, value:v}));
-        } else { specs = []; }
+          window.specs = Array.isArray(det.specifications) ? det.specifications : Object.entries(det.specifications).map(([k,v])=>({key:k, value:v}));
+        } else { window.specs = []; }
       } else {
         document.getElementById('detail-care').value = '';
         document.getElementById('detail-box').value = '';
         document.getElementById('detail-shipping').value = '';
         document.getElementById('detail-return').value = '';
-        specs = [];
+        window.specs = [];
       }
       renderSpecs();
 
@@ -578,7 +578,7 @@
         document.getElementById('has-variants').checked = true;
         document.getElementById('variants-section').style.display = 'block';
         
-        optionTypes = p.option_types.sort((a,b)=>a.sort_order - b.sort_order).map(ot => {
+        window.optionTypes = p.option_types.sort((a,b)=>a.sort_order - b.sort_order).map(ot => {
           const sortedVals = ot.values.sort((a,b)=>a.sort_order - b.sort_order);
           return {
             id: ot.id,
@@ -593,11 +593,11 @@
 
         if (p.variants && p.variants.length > 0) {
           // Reconstruct generatedVariants
-          generatedVariants = p.variants.map(v => {
+          window.generatedVariants = p.variants.map(v => {
             // Rebuild label from value IDs
             let labelParts = [];
             if(v.option_value_ids) {
-              optionTypes.forEach(ot => {
+              window.optionTypes.forEach(ot => {
                 const idx = ot.valueIds.findIndex(vid => v.option_value_ids.includes(vid));
                 if(idx !== -1) labelParts.push(ot.values[idx]);
               });
@@ -615,13 +615,13 @@
           });
           renderVariantsTable();
         } else {
-          generatedVariants = [];
+          window.generatedVariants = [];
         }
       } else {
         document.getElementById('has-variants').checked = false;
         document.getElementById('variants-section').style.display = 'none';
-        optionTypes = [];
-        generatedVariants = [];
+        window.optionTypes = [];
+        window.generatedVariants = [];
       }
 
       document.getElementById('modal-title').textContent = 'Edit Product';
@@ -633,11 +633,11 @@
       
       const hasVariants = document.getElementById('has-variants').checked;
       if (hasVariants) {
-        if(optionTypes.length === 0 || generatedVariants.length === 0) {
+        if(window.optionTypes.length === 0 || window.generatedVariants.length === 0) {
           showToast('Please define variants or uncheck "This product has variants"', 'warning');
           return;
         }
-        if(generatedVariants.some(v => !v.price)) {
+        if(window.generatedVariants.some(v => !v.price)) {
           showToast('All variants must have a price', 'warning');
           return;
         }
@@ -688,7 +688,7 @@
         }
 
         // 3. DETAILS
-        const validSpecs = specs.filter(s => s.key.trim() !== '' && s.value.trim() !== '');
+        const validSpecs = window.specs.filter(s => s.key.trim() !== '' && s.value.trim() !== '');
         const detailsData = {
           product_id: productId,
           specifications: validSpecs.length > 0 ? validSpecs : null,
@@ -706,8 +706,8 @@
         }
 
         if (hasVariants) {
-          for (let i=0; i<optionTypes.length; i++) {
-            const ot = optionTypes[i];
+          for (let i=0; i<window.optionTypes.length; i++) {
+            const ot = window.optionTypes[i];
             const { data: insertedOt } = await supabase.from('product_option_types').insert({
               product_id: productId, name: ot.name, display_type: ot.display_type, sort_order: i
             }).select().single();
@@ -726,12 +726,12 @@
           }
 
           // Insert variants
-          const variantInserts = generatedVariants.map(v => {
+          const variantInserts = window.generatedVariants.map(v => {
             // Find the UUIDs for this combo
             const valueIds = [];
             if(v.combo) {
               v.combo.forEach(c => {
-                const ot = optionTypes.find(t => t.name === c.typeName);
+                const ot = window.optionTypes.find(t => t.name === c.typeName);
                 if(ot && ot.dbValueMap) valueIds.push(ot.dbValueMap[c.value]);
               });
             } else if (v.original_value_ids) {

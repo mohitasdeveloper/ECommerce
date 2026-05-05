@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FAQ - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .faq-item { border-bottom: 1px solid var(--color-border); }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-question { display: flex; justify-content: space-between; align-items: center; padding: 1.5rem 0; font-weight: 600; font-size: 1.1rem; cursor: pointer; user-select: none; }
+    .faq-answer { display: none; padding-bottom: 1.5rem; color: var(--color-text-muted); line-height: 1.6; }
+    .faq-item.active .faq-answer { display: block; }
+    .faq-icon { transition: transform 0.3s; }
+    .faq-item.active .faq-icon { transform: rotate(45deg); }
+  </style>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main class="container section" style="max-width: 800px;">
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="margin-bottom: 1rem;">Frequently Asked Questions</h1>
+      <p class="text-muted" style="font-size: 1.1rem;">Find answers to common questions about our products and services.</p>
+    </div>
+
+    <div class="product-card" style="padding: 0 2rem;">
+      <div class="faq-item">
+        <div class="faq-question">
+          How long does shipping take?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Standard shipping typically takes 3-5 business days within India. Express shipping is available at checkout for 1-2 business day delivery.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question">
+          What is your return policy?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          We offer a hassle-free 7-day return policy for unused items in their original packaging. Please contact our support team to initiate a return.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question">
+          Do you ship internationally?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Currently, we only ship within India. We are working on expanding our shipping options to international destinations in the future.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question">
+          How can I track my order?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Once your order has been shipped, you will receive an email with a tracking number and a link to track your package. You can also view the status in your Account dashboard.
+        </div>
+      </div>
+      
+      <div class="faq-item">
+        <div class="faq-question">
+          Are my payment details secure?
+          <span class="faq-icon">+</span>
+        </div>
+        <div class="faq-answer">
+          Yes, we use Razorpay as our payment gateway, which provides industry-standard, secure encryption for all transactions. We do not store your credit card information on our servers.
+        </div>
+      </div>
+    </div>
+    
+    <div style="text-align: center; margin-top: 3rem;">
+      <p class="text-muted" style="margin-bottom: 1rem;">Still have questions?</p>
+      <a href="./contact.html" class="btn btn-outline">Contact Support</a>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script type="module">
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
+    
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
+
+    initPage();
+
+    // Accordion logic
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const item = btn.parentElement;
+        const isActive = item.classList.contains('active');
+        
+        // Close all
+        document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('active'));
+        
+        // Toggle clicked
+        if (!isActive) {
+          item.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

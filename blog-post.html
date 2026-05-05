@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Blog Post - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .post-header { text-align: center; margin-bottom: 2.5rem; }
+    .post-date { font-size: 0.9rem; color: var(--color-accent); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+    .post-title { font-size: clamp(2rem, 5vw, 3rem); font-weight: 800; line-height: 1.1; margin-bottom: 1.5rem; }
+    .post-image { width: 100%; border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 3rem; aspect-ratio: 16/9; background: var(--color-bg-secondary); }
+    .post-image img { width: 100%; height: 100%; object-fit: cover; }
+    .post-content { font-size: 1.1rem; line-height: 1.8; color: var(--color-text); }
+    .post-content h2, .post-content h3 { margin-top: 2.5rem; margin-bottom: 1rem; }
+    .post-content p { margin-bottom: 1.5rem; }
+    .post-content img { border-radius: var(--radius-md); margin: 2rem 0; width: 100%; }
+    .post-content blockquote { border-left: 4px solid var(--color-accent); padding-left: 1.5rem; font-style: italic; color: var(--color-text-muted); margin: 2rem 0; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main class="container section" style="max-width: 800px; min-height: 60vh;">
+    <div id="post-container">
+      <div class="skeleton" style="height: 40px; width: 60%; margin: 0 auto 2rem; border-radius: var(--radius-full);"></div>
+      <div class="skeleton" style="height: 400px; border-radius: var(--radius-lg); margin-bottom: 3rem;"></div>
+      <div class="skeleton" style="height: 20px; margin-bottom: 1rem;"></div>
+      <div class="skeleton" style="height: 20px; margin-bottom: 1rem;"></div>
+      <div class="skeleton" style="height: 20px; margin-bottom: 1rem; width: 80%;"></div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script type="module">
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
+    import { supabase } from './js/supabase.js';
+    
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
+
+    async function init() {
+      await initPage();
+      
+      const slug = new URLSearchParams(window.location.search).get('slug');
+      if (!slug) {
+        window.location.href = './blog.html';
+        return;
+      }
+      
+      const { data: post } = await supabase
+        .from('blog_posts')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_published', true)
+        .single();
+        
+      const container = document.getElementById('post-container');
+      
+      if (!post) {
+        container.innerHTML = '<div style="text-align: center; padding: 4rem 0;"><h2>Post not found</h2><p class="text-muted mt-4">The article you are looking for does not exist or has been removed.</p><a href="./blog.html" class="btn btn-primary mt-8">Back to Blog</a></div>';
+        return;
+      }
+      
+      document.title = `${post.title} - My Store`;
+      
+      const date = new Date(post.published_at || post.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+      const img = post.image_url || 'https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=1200&auto=format&fit=crop';
+      
+      container.innerHTML = `
+        <article>
+          <header class="post-header">
+            <div class="post-date">${date}</div>
+            <h1 class="post-title">${post.title}</h1>
+          </header>
+          
+          <div class="post-image">
+            <img src="${img}" alt="${post.title}">
+          </div>
+          
+          <div class="post-content">
+            ${post.content || '<p>Content coming soon...</p>'}
+          </div>
+          
+          <div style="margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--color-border); text-align: center;">
+            <a href="./blog.html" class="btn btn-outline">← Back to all posts</a>
+          </div>
+        </article>
+      `;
+    }
+    
+    init();
+  </script>
+</body>
+</html>

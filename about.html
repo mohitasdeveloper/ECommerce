@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>About Us - My Store</title>
+  <link rel="stylesheet" href="./css/main.css">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .about-header { text-align: center; margin-bottom: 3rem; }
+    .about-image { border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 2rem; max-height: 400px; }
+    .about-image img { width: 100%; height: 100%; object-fit: cover; }
+    .values-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 3rem; }
+    @media (min-width: 768px) { .values-grid { grid-template-columns: repeat(3, 1fr); } }
+    .value-card { background: var(--color-bg-secondary); padding: 2rem; border-radius: var(--radius-lg); text-align: center; }
+    .value-icon { font-size: 2.5rem; margin-bottom: 1rem; }
+  </style>
+</head>
+<body>
+  <div id="header-placeholder"></div>
+
+  <main class="container section" style="max-width: 800px;">
+    <div class="about-header">
+      <h1 style="margin-bottom: 1rem;">About Our Store</h1>
+      <p class="text-muted" style="font-size: 1.1rem; max-width: 600px; margin: 0 auto;">We believe in delivering the highest quality products with exceptional customer service.</p>
+    </div>
+
+    <div class="about-image">
+      <img src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?q=80&w=1200&auto=format&fit=crop" alt="Our Team">
+    </div>
+
+    <div style="font-size: 1.05rem; line-height: 1.8;">
+      <h2 style="margin-top: 2.5rem; margin-bottom: 1rem;">Our Story</h2>
+      <p style="margin-bottom: 1.5rem;">Founded with a passion for quality and design, our store began as a small project and has grown into a trusted destination for premium products. We carefully curate our collection to ensure every item meets our high standards of durability, aesthetics, and functionality.</p>
+      
+      <p>Whether you're looking for the latest electronics, timeless clothing, or everyday essentials, we are committed to providing an exceptional shopping experience from start to finish.</p>
+    </div>
+
+    <div class="values-grid">
+      <div class="value-card">
+        <div class="value-icon">✨</div>
+        <h3 style="margin-bottom: 0.5rem;">Quality First</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">We source only the best materials and work with trusted manufacturers.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">🚚</div>
+        <h3 style="margin-bottom: 0.5rem;">Fast Delivery</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">Quick and reliable shipping to get your products to you on time.</p>
+      </div>
+      <div class="value-card">
+        <div class="value-icon">❤️</div>
+        <h3 style="margin-bottom: 0.5rem;">Customer Care</h3>
+        <p class="text-muted" style="font-size: 0.9rem;">Our dedicated team is always here to help you with any questions.</p>
+      </div>
+    </div>
+  </main>
+
+  <div id="footer-placeholder"></div>
+
+  <script type="module">
+    import { HEADER_HTML, FOOTER_HTML, BOTTOM_NAV_HTML, initPage } from './js/header.js';
+    
+    document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
+    document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
+    document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
+
+    initPage();
+  </script>
+</body>
+</html>

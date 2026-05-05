@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manage Reviews - Admin</title>
+  <link rel="stylesheet" href="../css/main.css">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="admin-logo">Admin Panel</div>
+      <nav class="admin-nav">
+        <a href="index.html">Dashboard</a>
+        <a href="products.html">Products</a>
+        <a href="orders.html">Orders</a>
+        <a href="coupons.html">Coupons</a>
+        <a href="reviews.html" class="active">Reviews</a>
+        <a href="blog.html">Blog</a>
+        <a href="settings.html">Settings</a>
+      </nav>
+    </aside>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1 style="font-size: 1.25rem; margin: 0;">Reviews Moderation</h1>
+      </header>
+
+      <div class="admin-content">
+        <div class="table-container">
+          <table style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Product</th>
+                <th>User</th>
+                <th>Rating</th>
+                <th>Review</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="reviews-tbody">
+              <tr><td colspan="7">Loading...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script type="module">
+    import { initAuth } from '../js/auth.js';
+    import { checkAdmin } from '../js/admin.js';
+    import { supabase } from '../js/supabase.js';
+    import { showToast } from '../js/toast.js';
+
+    async function init() {
+      await initAuth();
+      await checkAdmin();
+      await loadReviews();
+    }
+
+    async function loadReviews() {
+      const { data } = await supabase
+        .from('reviews')
+        .select('*, products(name), profiles(full_name)')
+        .order('created_at', { ascending: false });
+        
+      const tbody = document.getElementById('reviews-tbody');
+      
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7">No reviews found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(r => `
+        <tr>
+          <td><div class="text-muted text-sm">${new Date(r.created_at).toLocaleDateString()}</div></td>
+          <td style="max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+            ${r.products ? r.products.name : '-'}
+          </td>
+          <td>${r.profiles ? r.profiles.full_name : 'Anonymous'}</td>
+          <td><span style="color:#f59e0b;font-weight:bold;">${'★'.repeat(r.rating)}</span></td>
+          <td style="max-width:250px;">
+            ${r.title ? `<div style="font-weight:600;font-size:0.85rem;margin-bottom:0.2rem;">${r.title}</div>` : ''}
+            <div style="font-size:0.8rem;color:var(--color-text-muted);display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;">${r.body || '-'}</div>
+          </td>
+          <td>
+            <span class="badge-stock ${r.is_approved ? 'in-stock' : 'out-of-stock'}">${r.is_approved ? 'Approved' : 'Pending'}</span>
+          </td>
+          <td>
+            <div style="display:flex;gap:0.5rem;">
+              <button class="btn btn-outline btn-sm" onclick="window.toggleReviewStatus('${r.id}', ${r.is_approved})">${r.is_approved ? 'Reject' : 'Approve'}</button>
+              <button class="btn btn-danger btn-sm" onclick="window.deleteReview('${r.id}')">Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    window.toggleReviewStatus = async function(id, currentStatus) {
+      const { error } = await supabase.from('reviews').update({ is_approved: !currentStatus }).eq('id', id);
+      if (error) {
+        showToast('Error updating status', 'error');
+        return;
+      }
+      showToast(`Review ${!currentStatus ? 'approved' : 'rejected'}`, 'success');
+      loadReviews();
+    }
+
+    window.deleteReview = async function(id) {
+      if (!confirm('Are you sure you want to delete this review?')) return;
+      
+      const { error } = await supabase.from('reviews').delete().eq('id', id);
+      if (error) {
+        showToast('Error deleting review', 'error');
+        return;
+      }
+      showToast('Review deleted', 'success');
+      loadReviews();
+    }
+
+    init();
+  </script>
+</body>
+</html>

@@ -47,6 +47,7 @@ export async function fetchProducts(options = {}) {
   }
 
   // Process media to get main image
+  if (!data) return [];
   return data.map(product => {
     let mainRaw = product.media && product.media.length > 0 
       ? product.media.sort((a,b) => a.sort_order - b.sort_order)[0].url 

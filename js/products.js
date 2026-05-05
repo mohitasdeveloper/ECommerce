@@ -3,6 +3,8 @@ import { isInWishlist, toggleWishlist } from './wishlist.js';
 import { addToCart } from './cart.js';
 import { showToast } from './toast.js';
 
+import { optimizeCloudinaryUrl } from './cloudinary.js';
+
 export async function fetchProducts(options = {}) {
   let query = supabase
     .from('products')
@@ -46,13 +48,16 @@ export async function fetchProducts(options = {}) {
 
   // Process media to get main image
   return data.map(product => {
-    product.main_image_url = product.media && product.media.length > 0 
+    let mainRaw = product.media && product.media.length > 0 
       ? product.media.sort((a,b) => a.sort_order - b.sort_order)[0].url 
       : 'https://placehold.co/400x500?text=No+Image'; // Fallback
       
-    product.hover_image_url = product.media && product.media.length > 1
+    let hoverRaw = product.media && product.media.length > 1
       ? product.media.sort((a,b) => a.sort_order - b.sort_order)[1].url
-      : product.main_image_url;
+      : mainRaw;
+
+    product.main_image_url = optimizeCloudinaryUrl(mainRaw, 400);
+    product.hover_image_url = optimizeCloudinaryUrl(hoverRaw, 400);
       
     return product;
   });

@@ -51,3 +51,16 @@ export function getMainImageUrl(publicId) {
 export function getGalleryThumbnailUrl(publicId) {
   return `https://res.cloudinary.com/${cloudName}/image/upload/w_120,h_120,c_fill,f_auto,q_auto/${publicId}`;
 }
+
+export function optimizeCloudinaryUrl(url, width = 400, height = 0, crop = 'fill') {
+  if (!url || !url.includes('cloudinary.com')) return url;
+  // Don't re-optimize if it already has parameters like w_ or f_
+  if (url.match(/\/upload\/[a-z]_[^/]+\//)) return url;
+  
+  if (url.includes('/upload/')) {
+    let params = `w_${width},f_auto,q_auto`;
+    if (height > 0) params += `,h_${height},c_${crop}`;
+    return url.replace('/upload/', `/upload/${params}/`);
+  }
+  return url;
+}

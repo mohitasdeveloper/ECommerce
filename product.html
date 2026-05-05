@@ -55,6 +55,8 @@
     import { addToCart } from './js/cart.js';
     import { isInWishlist, toggleWishlist, fetchWishlist } from './js/wishlist.js';
 
+    import { optimizeCloudinaryUrl } from './js/cloudinary.js';
+
     document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
     document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
     document.body.insertAdjacentHTML('beforeend', BOTTOM_NAV_HTML);
@@ -86,7 +88,8 @@
     function renderProduct() {
       const isWished = isInWishlist(product.id);
       
-      let mainMedia = product.media && product.media.length > 0 ? product.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/800x800?text=No+Image';
+      let mainMediaRaw = product.media && product.media.length > 0 ? product.media.sort((a,b)=>a.sort_order-b.sort_order)[0].url : 'https://placehold.co/800x800?text=No+Image';
+      let mainMedia = optimizeCloudinaryUrl(mainMediaRaw, 800);
 
       let html = `
         <div class="product-layout">
@@ -94,9 +97,11 @@
           <div>
             <div class="gallery-main"><img id="main-img" src="${mainMedia}" alt="${product.name}"></div>
             <div class="gallery-thumbs">
-              ${(product.media || []).sort((a,b)=>a.sort_order-b.sort_order).map((m, i) => `
-                <img src="${m.url}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${m.url}', this)" alt="Thumbnail ${i+1}">
-              `).join('')}
+              ${(product.media || []).sort((a,b)=>a.sort_order-b.sort_order).map((m, i) => {
+                let thumbUrl = optimizeCloudinaryUrl(m.url, 150);
+                let fullUrl = optimizeCloudinaryUrl(m.url, 800);
+                return `<img src="${thumbUrl}" class="${i === 0 ? 'active' : ''}" onclick="changeImage('${fullUrl}', this)" alt="Thumbnail ${i+1}">`;
+              }).join('')}
             </div>
           </div>
 

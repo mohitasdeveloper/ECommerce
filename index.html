@@ -102,11 +102,14 @@
       const { data: cats } = await supabase.from('categories').select('*').order('sort_order');
       const CATEGORY_EMOJIS = { electronics: '⚡', clothing: '👕', footwear: '👟', accessories: '⌚' };
       if (cats && cats.length > 0) {
+        // Need dynamic import since we're in a module block inside HTML
+        const { optimizeCloudinaryUrl } = await import('./js/cloudinary.js');
+        
         document.getElementById('category-grid').innerHTML = cats.map(c => `
           <a href="./shop.html?category=${c.slug}" class="category-card">
             <div class="category-img" style="background:linear-gradient(135deg,#e0e7ff,#f0fdf4)">
               ${c.image_url
-                ? `<img src="${c.image_url}" alt="${c.name}" loading="lazy">`
+                ? `<img src="${optimizeCloudinaryUrl(c.image_url, 400)}" alt="${c.name}" loading="lazy">`
                 : `<span style="font-size:3rem;">${CATEGORY_EMOJIS[c.slug] || '📦'}</span>`
               }
             </div>

@@ -22,6 +22,16 @@ body { background-color: var(--color-bg-secondary); }
   z-index: 40;
   box-shadow: var(--shadow-sm);
 }
+@media (max-width: 767px) {
+  .admin-layout { flex-direction: column; }
+  .admin-sidebar {
+    position: relative;
+    width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: none;
+  }
+}
 
 .admin-logo {
   height: 4.5rem;
@@ -38,6 +48,18 @@ body { background-color: var(--color-bg-secondary); }
   flex-grow: 1;
   padding: 1.5rem 0;
   overflow-y: auto;
+}
+@media (max-width: 767px) {
+  .admin-logo { height: 3.5rem; justify-content: center; }
+  .admin-nav {
+    padding: 0.5rem;
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .admin-nav::-webkit-scrollbar { display: none; }
 }
 
 .admin-nav a {
@@ -82,6 +104,13 @@ body { background-color: var(--color-bg-secondary); }
   flex-direction: column;
   min-width: 0; /* prevents flex blowout */
 }
+@media (max-width: 767px) {
+  .admin-nav a { padding: 0.5rem 1rem; white-space: nowrap; border-radius: var(--radius-md); }
+  .admin-nav a.active::before { display: none; }
+  .admin-nav a.active { background: rgba(37,99,235,0.08); border-bottom: none; }
+  
+  .admin-main { margin-left: 0; }
+}
 
 .admin-header {
   height: 4.5rem;
@@ -109,6 +138,15 @@ body { background-color: var(--color-bg-secondary); }
   max-width: 1400px;
   margin: 0 auto;
   width: 100%;
+}
+
+@media (max-width: 767px) {
+  .admin-header { padding: 0 1rem; }
+  .admin-header h1 { font-size: 1.15rem; }
+  .admin-content { padding: 1rem; }
+  
+  .d-flex.gap-4 { flex-direction: column; gap: 1rem; }
+  #search-products, #filter-category, #filter-status { width: 100%; }
 }
 
 /* Dashboard Cards */
@@ -156,6 +194,7 @@ body { background-color: var(--color-bg-secondary); }
   display: flex;
   gap: 1rem;
   margin-bottom: 2.5rem;
+  flex-wrap: wrap;
 }
 
 /* Data Tables */

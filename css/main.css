@@ -41,8 +41,8 @@ button { cursor: pointer; border: none; background: none; transition: all 0.2s e
 .container { width: 100%; max-width: var(--container-max); margin: 0 auto; padding: 0 1rem; }
 @media (min-width: 640px) { .container { padding: 0 1.5rem; } }
 @media (min-width: 1024px) { .container { padding: 0 2rem; } }
-.section { padding: 2rem 0; }
-@media (min-width: 768px) { .section { padding: 4.5rem 0; } }
+.section { padding-top: 2rem; padding-bottom: 2rem; }
+@media (min-width: 768px) { .section { padding-top: 4.5rem; padding-bottom: 4.5rem; } }
 
 /* Responsive helpers */
 .flex-column { flex-direction: column; }

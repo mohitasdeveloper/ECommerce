@@ -14,26 +14,6 @@
   <div id="header-placeholder"></div>
 
   <main>
-    <!-- Hero Banner -->
-    <section class="hero-section" id="hero">
-      <div class="container" style="padding: 0;">
-        <div class="hero-slide active">
-          <div class="hero-content" style="padding-left: 1rem; padding-right: 1rem;">
-            <p class="hero-label">New Arrivals 2024</p>
-            <h1 class="hero-title">Quality You<br>Can Trust</h1>
-            <p class="hero-subtitle">Discover premium products crafted for everyday excellence.</p>
-            <div class="hero-actions">
-              <a href="./shop.html" class="btn btn-primary" style="padding: 0.85rem 1.75rem; font-size:0.95rem;">Shop Now</a>
-              <a href="./about.html" class="btn btn-outline" style="padding: 0.85rem 1.75rem; font-size:0.95rem;">Our Story</a>
-            </div>
-          </div>
-          <div class="hero-image-area" style="background: linear-gradient(135deg, #e0e7ff 0%, #f0fdf4 100%); display:flex; align-items:center; justify-content:center; font-size: 8rem;">
-            🛍️
-          </div>
-        </div>
-      </div>
-    </section>
-
     <!-- Categories -->
     <section class="container section">
       <div class="section-header">
@@ -62,18 +42,6 @@
           <div class="product-card skeleton" style="height:360px;"></div>
           <div class="product-card skeleton" style="height:360px;"></div>
         </div>
-      </div>
-    </section>
-
-    <!-- Testimonials -->
-    <section class="container section">
-      <div class="section-header">
-        <h2 class="section-title">What Our Customers Say</h2>
-      </div>
-      <div id="testimonials" class="testimonials-grid">
-        <div class="testimonial-card skeleton" style="height:160px;"></div>
-        <div class="testimonial-card skeleton" style="height:160px;"></div>
-        <div class="testimonial-card skeleton" style="height:160px;"></div>
       </div>
     </section>
   </main>
@@ -116,32 +84,6 @@
             <div class="category-name">${c.name}</div>
           </a>
         `).join('');
-      }
-
-      // Testimonials
-      const { data: reviews } = await supabase
-        .from('reviews')
-        .select('rating, title, body, user_id, profiles(full_name)')
-        .eq('is_approved', true)
-        .order('created_at', { ascending: false })
-        .limit(3);
-
-      const stars = n => '★'.repeat(n) + '☆'.repeat(5 - n);
-      if (reviews && reviews.length > 0) {
-        document.getElementById('testimonials').innerHTML = reviews.map(r => `
-          <div class="testimonial-card">
-            <div style="color:#f59e0b;font-size:1.1rem;margin-bottom:0.5rem;">${stars(r.rating)}</div>
-            ${r.title ? `<div style="font-weight:600;margin-bottom:0.5rem;">${r.title}</div>` : ''}
-            <p class="text-muted" style="font-size:0.9rem;line-height:1.6;">"${r.body}"</p>
-            <div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">${r.profiles?.full_name || 'Anonymous'}</div>
-          </div>
-        `).join('');
-      } else {
-        document.getElementById('testimonials').innerHTML = `
-          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★★</div><p class="text-muted">"Excellent quality products and fast shipping!"</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Priya S.</div></div>
-          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★★</div><p class="text-muted">"Best online shopping experience I've had."</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Rahul M.</div></div>
-          <div class="testimonial-card"><div style="color:#f59e0b;font-size:1.1rem;">★★★★☆</div><p class="text-muted">"Great value for money. Highly recommend!"</p><div style="margin-top:1rem;font-weight:500;font-size:0.85rem;">Anjali K.</div></div>
-        `;
       }
     }
 

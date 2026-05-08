@@ -87,7 +87,7 @@
 <body>
   <div id="header-placeholder"></div>
 
-  <main class="container section" style="padding-top: 0;">
+  <main class="container section">
     <div class="account-layout">
       <!-- Sidebar -->
       <aside class="account-sidebar">
@@ -177,6 +177,7 @@
               <div style="font-weight:600; margin-bottom:0.5rem;">Profile Photo</div>
               <div style="display:flex; gap:0.5rem; flex-wrap:wrap;">
                 <button class="btn btn-outline btn-sm" id="change-avatar-btn-profile">Upload Photo</button>
+                <input type="file" id="hidden-avatar-input" accept="image/*" style="display:none;">
                 <button class="btn btn-outline btn-sm" id="remove-avatar-btn" style="color:var(--color-danger); display:none;">Remove</button>
               </div>
             </div>
@@ -203,7 +204,7 @@
     import { supabase } from './js/supabase.js';
     import { showToast } from './js/toast.js';
     import { fetchProducts, renderProductCards } from './js/products.js';
-    import { openUploadWidget, optimizeCloudinaryUrl } from './js/cloudinary.js';
+    import { uploadFileDirectly, optimizeCloudinaryUrl } from './js/cloudinary.js';
 
     document.getElementById('header-placeholder').innerHTML = HEADER_HTML;
     document.getElementById('footer-placeholder').innerHTML = FOOTER_HTML;
@@ -270,20 +271,37 @@
       });
 
       // Avatar upload handlers
+      const hiddenInput = document.getElementById('hidden-avatar-input');
+      
       function handleAvatarUpload() {
-        openUploadWidget({ multiple: false, folder: 'avatars', cropping: true, croppingAspectRatio: 1 }, async (res) => {
+        hiddenInput.click();
+      }
+      
+      hiddenInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        
+        showToast('Uploading photo...', 'info');
+        try {
+          const res = await uploadFileDirectly(file);
           const url = res.url;
           const { error } = await supabase.from('profiles').update({ avatar_url: url }).eq('id', user.id);
+          
           if (!error) {
             document.getElementById('user-avatar').src = url;
             document.getElementById('profile-avatar').src = url;
             document.getElementById('remove-avatar-btn').style.display = 'inline-flex';
             showToast('Profile photo updated!', 'success');
           } else {
-            showToast('Failed to update photo', 'error');
+            showToast('Failed to save photo URL', 'error');
           }
-        });
-      }
+        } catch (err) {
+          showToast(err.message || 'Upload failed', 'error');
+        } finally {
+          hiddenInput.value = ''; // Reset input
+        }
+      });
+      
       document.getElementById('change-avatar-btn').addEventListener('click', handleAvatarUpload);
       document.getElementById('change-avatar-btn-profile').addEventListener('click', handleAvatarUpload);
       

@@ -58,9 +58,40 @@ export function optimizeCloudinaryUrl(url, width = 400, height = 0, crop = 'fill
   if (url.match(/\/upload\/[a-z]_[^/]+\//)) return url;
   
   if (url.includes('/upload/')) {
-    let params = `w_${width},f_auto,q_auto`;
-    if (height > 0) params += `,h_${height},c_${crop}`;
-    return url.replace('/upload/', `/upload/${params}/`);
+    const params = [];
+    if (width) params.push(`w_${width}`);
+    if (height) params.push(`h_${height}`);
+    if (crop) params.push(`c_${crop}`);
+    params.push('f_auto');
+    params.push('q_auto');
+    
+    return url.replace('/upload/', `/upload/${params.join(',')}/`);
   }
   return url;
 }
+
+export async function uploadFileDirectly(file) {
+  const url = `https://api.cloudinary.com/v1_1/${cloudName}/upload`;
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', uploadPreset);
+  formData.append('folder', 'avatars');
+
+  try {
+    const res = await fetch(url, { method: 'POST', body: formData });
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'Upload failed');
+    }
+    const result = await res.json();
+    return {
+      url: result.secure_url,
+      public_id: result.public_id,
+      type: result.resource_type
+    };
+  } catch (error) {
+    console.error('Direct upload error:', error);
+    throw error;
+  }
+}
+

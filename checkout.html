@@ -90,6 +90,20 @@
             <button class="btn btn-outline" id="apply-coupon-btn" style="white-space: nowrap;">Apply</button>
           </div>
 
+          <div style="margin-bottom: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+            <h4 style="font-size: 0.95rem; margin-bottom: 0.75rem;">Payment Method</h4>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="payment_method" value="razorpay" checked>
+                <span style="font-size: 0.95rem;">Pay Online (Cards, UPI, NetBanking)</span>
+              </label>
+              <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                <input type="radio" name="payment_method" value="cod">
+                <span style="font-size: 0.95rem;">Cash on Delivery (COD)</span>
+              </label>
+            </div>
+          </div>
+
           <div class="d-flex justify-between mb-4" style="padding-top: 1rem; border-top: 1px solid var(--color-border);">
             <span class="fw-bold" style="font-size: 1.15rem;">Total</span>
             <span class="fw-bold" id="summary-total" style="font-size: 1.15rem; color: var(--color-accent);">₹0</span>
@@ -172,6 +186,13 @@
 
       document.getElementById('pay-now-btn').addEventListener('click', handlePayNow);
       document.getElementById('apply-coupon-btn').addEventListener('click', handleCoupon);
+
+      // Listen for payment method changes to update button text
+      document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          document.getElementById('pay-now-btn').textContent = e.target.value === 'cod' ? 'Place Order' : 'Pay Now';
+        });
+      });
     }
 
     async function loadAddresses() {
@@ -280,19 +301,27 @@
       
       const addr = addresses.find(a => a.id === selectedAddressId);
       const cart = getCart();
-      
+      const cart = getCart();
+      const btn = document.getElementById('pay-now-btn');
+      btn.disabled = true;
+      btn.textContent = 'Processing...';
+
+      const paymentMethod = document.querySelector('input[name="payment_method"]:checked').value;
+
       const orderData = {
-        shipping_address: addr,
-        items: cart
+        shipping_address: addresses.find(a => a.id === selectedAddressId),
+        items: cart,
+        payment_method: paymentMethod
       };
-      
-      document.getElementById('pay-now-btn').disabled = true;
-      document.getElementById('pay-now-btn').textContent = 'Processing...';
-      
-      await processCheckout(orderData, couponData);
-      
-      document.getElementById('pay-now-btn').disabled = false;
-      document.getElementById('pay-now-btn').textContent = 'Pay Now';
+
+      try {
+        await processCheckout(orderData, couponData);
+      } catch (error) {
+        showToast(error.message, 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = paymentMethod === 'cod' ? 'Place Order' : 'Pay Now';
+      }
     }
 
     init();

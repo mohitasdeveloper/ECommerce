@@ -299,6 +299,9 @@ create policy "Users insert own orders" on orders for insert with check (auth.ui
 create policy "Users see own order items" on order_items for select using (
   exists (select 1 from orders where orders.id = order_items.order_id and orders.user_id = auth.uid())
 );
+create policy "Users insert own order items" on order_items for insert with check (
+  exists (select 1 from orders where orders.id = order_items.order_id and orders.user_id = auth.uid())
+);
 
 -- Wishlist: users manage own wishlist
 create policy "Users manage own wishlist" on wishlist for all using (auth.uid() = user_id);

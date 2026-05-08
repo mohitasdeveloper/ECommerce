@@ -40,6 +40,49 @@ export async function processCheckout(orderData, couponData) {
   const total = finalSubtotal + shippingCharge;
   const totalPaise = Math.round(total * 100);
 
+  if (orderData.payment_method === 'cod') {
+    try {
+      // 1. Insert order directly
+      const { data: order, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          user_id: user.id,
+          status: 'confirmed',
+          subtotal: subtotal,
+          discount: discount,
+          shipping_charge: shippingCharge,
+          total: total,
+          coupon_code: couponData ? couponData.code : null,
+          shipping_address: orderData.shipping_address
+        }])
+        .select()
+        .single();
+
+      if (orderError) throw orderError;
+
+      // 2. Insert order items
+      const itemsToInsert = orderData.items.map(item => ({
+        order_id: order.id,
+        product_id: item.product_id,
+        variant_id: item.variant_id || null,
+        quantity: item.quantity,
+        price_at_purchase: item.price,
+        product_snapshot: item
+      }));
+
+      const { error: itemsError } = await supabase.from('order_items').insert(itemsToInsert);
+      if (itemsError) throw itemsError;
+
+      // 3. Clear cart and redirect
+      clearCart();
+      window.location.href = `./order-success.html?order_id=${order.id}`;
+      return;
+    } catch (err) {
+      showToast('Error processing order: ' + err.message, 'error');
+      return;
+    }
+  }
+
   // 2. Call create-razorpay-order edge function
   try {
     const { data: orderResponse, error: createError } = await supabase.functions.invoke('create-razorpay-order', {

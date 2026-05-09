@@ -94,7 +94,7 @@ export function renderProductCards(products, containerId) {
               <span class="product-price">₹${product.price}</span>
               ${product.compare_price && product.compare_price > product.price ? `<span class="compare-price">₹${product.compare_price}</span>` : ''}
             </div>
-            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" data-name="${product.name}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
+            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" data-slug="${product.slug}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
               ${product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
@@ -121,35 +121,63 @@ export function renderProductCards(products, containerId) {
   });
 
   container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
+    btn.addEventListener('click', async (e) => {
       e.preventDefault();
       const productId = btn.getAttribute('data-id');
+      const productSlug = btn.getAttribute('data-slug');
       const product = products.find(p => p.id === productId);
       
-      // If product might have variants, ideally we route them to product page.
-      // For simplicity here, we add base product. Real implementation checks variant table.
-      // Here, we just add the base product.
-      if (product) {
-        addToCart(product);
-        
-        // Change button to "View Cart"
-        btn.textContent = 'View Cart';
-        btn.style.background = 'var(--color-accent)';
-        btn.onclick = () => {
-          window.location.href = './cart.html';
-        };
+      if (!product) return;
+
+      // Check if product has variants - fetch variants from database
+      const { data: variants } = await supabase
+        .from('variants')
+        .select('id')
+        .eq('product_id', productId)
+        .limit(1);
+
+      // If product has variants, redirect to product page
+      if (variants && variants.length > 0) {
+        window.location.href = `./product.html?slug=${productSlug}`;
+        return;
       }
+
+      // If no variants, add to cart directly
+      addToCart(product);
+      updateButtonState(btn, productId);
     });
   });
 
-  // Check if products are already in cart and update button state
-  const cart = getCart();
+  // Update button states on initial load
+  updateAllButtonStates(container);
+}
+
+// Function to update a single button state
+function updateButtonState(btn, productId) {
+  // Save to localStorage to persist state
+  const savedProducts = JSON.parse(localStorage.getItem('store_products_in_cart') || '[]');
+  if (!savedProducts.includes(productId)) {
+    savedProducts.push(productId);
+    localStorage.setItem('store_products_in_cart', JSON.stringify(savedProducts));
+  }
+
+  btn.textContent = 'View Cart';
+  btn.classList.add('viewing-cart');
+  btn.onclick = () => {
+    window.location.href = './cart.html';
+  };
+}
+
+// Function to update all button states
+function updateAllButtonStates(container) {
+  const savedProducts = JSON.parse(localStorage.getItem('store_products_in_cart') || '[]');
+  
   container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
     const productId = btn.getAttribute('data-id');
-    const isInCart = cart.some(item => item.product_id === productId);
     
-    if (isInCart && btn.textContent === 'Add to Cart') {
+    if (savedProducts.includes(productId)) {
       btn.textContent = 'View Cart';
+      btn.classList.add('viewing-cart');
       btn.onclick = () => {
         window.location.href = './cart.html';
       };
@@ -181,10 +209,7 @@ window.addEventListener('cartUpdated', () => {
     const isInCart = cart.some(item => item.product_id === productId);
     
     if (isInCart && btn.textContent === 'Add to Cart') {
-      btn.textContent = 'View Cart';
-      btn.onclick = () => {
-        window.location.href = './cart.html';
-      };
+      updateButtonState(btn, productId);
     }
   });
 });

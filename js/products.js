@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 import { isInWishlist, toggleWishlist } from './wishlist.js';
-import { addToCart, getCart } from './cart.js';
+import { addToCart } from './cart.js';
 import { showToast } from './toast.js';
 
 import { optimizeCloudinaryUrl } from './cloudinary.js';
@@ -81,7 +81,7 @@ export function renderProductCards(products, containerId) {
         <a href="./product.html?slug=${product.slug}" class="product-card-img-link">
           <div class="product-card-img" onmouseenter="this.querySelector('img').src='${product.hover_image_url}'" onmouseleave="this.querySelector('img').src='${product.main_image_url}'">
             <img src="${product.main_image_url}" alt="${product.name}" loading="lazy">
-            <button class="action-btn wishlist-btn absolute top-2 right-2 bg-white" data-id="${product.id}" aria-label="Toggle Wishlist" style="position:absolute; top:8px; right:8px; background:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.07); backdrop-filter:blur(4px); z-index:10;">
+            <button class="action-btn wishlist-btn absolute top-2 right-2 bg-white" data-id="${product.id}" aria-label="Toggle Wishlist" style="position:absolute; top:8px; right:8px; background:white;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="${isWished ? 'var(--color-danger)' : 'none'}" stroke="${isWished ? 'var(--color-danger)' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
           </div>
@@ -94,7 +94,7 @@ export function renderProductCards(products, containerId) {
               <span class="product-price">₹${product.price}</span>
               ${product.compare_price && product.compare_price > product.price ? `<span class="compare-price">₹${product.compare_price}</span>` : ''}
             </div>
-            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" data-slug="${product.slug}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
+            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
               ${product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
@@ -121,67 +121,18 @@ export function renderProductCards(products, containerId) {
   });
 
   container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', async (e) => {
+    btn.addEventListener('click', (e) => {
       e.preventDefault();
       const productId = btn.getAttribute('data-id');
-      const productSlug = btn.getAttribute('data-slug');
       const product = products.find(p => p.id === productId);
       
-      if (!product) return;
-
-      // Check if product has variants - fetch variants from database
-      const { data: variants } = await supabase
-        .from('variants')
-        .select('id')
-        .eq('product_id', productId)
-        .limit(1);
-
-      // If product has variants, redirect to product page
-      if (variants && variants.length > 0) {
-        window.location.href = `./product.html?slug=${productSlug}`;
-        return;
+      // If product might have variants, ideally we route them to product page.
+      // For simplicity here, we add base product. Real implementation checks variant table.
+      // Here, we just add the base product.
+      if (product) {
+        addToCart(product);
       }
-
-      // If no variants, add to cart directly
-      addToCart(product);
-      updateButtonState(btn, productId);
     });
-  });
-
-  // Update button states on initial load
-  updateAllButtonStates(container);
-}
-
-// Function to update a single button state
-function updateButtonState(btn, productId) {
-  // Save to localStorage to persist state
-  const savedProducts = JSON.parse(localStorage.getItem('store_products_in_cart') || '[]');
-  if (!savedProducts.includes(productId)) {
-    savedProducts.push(productId);
-    localStorage.setItem('store_products_in_cart', JSON.stringify(savedProducts));
-  }
-
-  btn.textContent = 'View Cart';
-  btn.classList.add('viewing-cart');
-  btn.onclick = () => {
-    window.location.href = './cart.html';
-  };
-}
-
-// Function to update all button states
-function updateAllButtonStates(container) {
-  const savedProducts = JSON.parse(localStorage.getItem('store_products_in_cart') || '[]');
-  
-  container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    const productId = btn.getAttribute('data-id');
-    
-    if (savedProducts.includes(productId)) {
-      btn.textContent = 'View Cart';
-      btn.classList.add('viewing-cart');
-      btn.onclick = () => {
-        window.location.href = './cart.html';
-      };
-    }
   });
 }
 
@@ -197,19 +148,6 @@ window.addEventListener('wishlistUpdated', (e) => {
     } else {
       svg.setAttribute('fill', 'none');
       svg.setAttribute('stroke', 'currentColor');
-    }
-  });
-});
-
-// Listen for cart updates and update button states
-window.addEventListener('cartUpdated', () => {
-  const cart = getCart();
-  document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    const productId = btn.getAttribute('data-id');
-    const isInCart = cart.some(item => item.product_id === productId);
-    
-    if (isInCart && btn.textContent === 'Add to Cart') {
-      updateButtonState(btn, productId);
     }
   });
 });

@@ -1,6 +1,6 @@
 import { supabase } from './supabase.js';
 import { isInWishlist, toggleWishlist } from './wishlist.js';
-import { addToCart } from './cart.js';
+import { addToCart, getCart } from './cart.js';
 import { showToast } from './toast.js';
 
 import { optimizeCloudinaryUrl } from './cloudinary.js';
@@ -81,7 +81,7 @@ export function renderProductCards(products, containerId) {
         <a href="./product.html?slug=${product.slug}" class="product-card-img-link">
           <div class="product-card-img" onmouseenter="this.querySelector('img').src='${product.hover_image_url}'" onmouseleave="this.querySelector('img').src='${product.main_image_url}'">
             <img src="${product.main_image_url}" alt="${product.name}" loading="lazy">
-            <button class="action-btn wishlist-btn absolute top-2 right-2 bg-white" data-id="${product.id}" aria-label="Toggle Wishlist" style="position:absolute; top:8px; right:8px; background:white;">
+            <button class="action-btn wishlist-btn absolute top-2 right-2 bg-white" data-id="${product.id}" aria-label="Toggle Wishlist" style="position:absolute; top:8px; right:8px; background:white; border-radius:50%; width:32px; height:32px; display:flex; align-items:center; justify-content:center; box-shadow:0 1px 3px rgba(0,0,0,0.07); backdrop-filter:blur(4px); z-index:10;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="${isWished ? 'var(--color-danger)' : 'none'}" stroke="${isWished ? 'var(--color-danger)' : 'currentColor'}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>
             </button>
           </div>
@@ -94,7 +94,7 @@ export function renderProductCards(products, containerId) {
               <span class="product-price">₹${product.price}</span>
               ${product.compare_price && product.compare_price > product.price ? `<span class="compare-price">₹${product.compare_price}</span>` : ''}
             </div>
-            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
+            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" data-name="${product.name}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
               ${product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'Add to Cart'}
             </button>
           </div>
@@ -131,8 +131,29 @@ export function renderProductCards(products, containerId) {
       // Here, we just add the base product.
       if (product) {
         addToCart(product);
+        
+        // Change button to "View Cart"
+        btn.textContent = 'View Cart';
+        btn.style.background = 'var(--color-accent)';
+        btn.onclick = () => {
+          window.location.href = './cart.html';
+        };
       }
     });
+  });
+
+  // Check if products are already in cart and update button state
+  const cart = getCart();
+  container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    const productId = btn.getAttribute('data-id');
+    const isInCart = cart.some(item => item.product_id === productId);
+    
+    if (isInCart && btn.textContent === 'Add to Cart') {
+      btn.textContent = 'View Cart';
+      btn.onclick = () => {
+        window.location.href = './cart.html';
+      };
+    }
   });
 }
 
@@ -148,6 +169,22 @@ window.addEventListener('wishlistUpdated', (e) => {
     } else {
       svg.setAttribute('fill', 'none');
       svg.setAttribute('stroke', 'currentColor');
+    }
+  });
+});
+
+// Listen for cart updates and update button states
+window.addEventListener('cartUpdated', () => {
+  const cart = getCart();
+  document.querySelectorAll('.add-to-cart-btn').forEach(btn => {
+    const productId = btn.getAttribute('data-id');
+    const isInCart = cart.some(item => item.product_id === productId);
+    
+    if (isInCart && btn.textContent === 'Add to Cart') {
+      btn.textContent = 'View Cart';
+      btn.onclick = () => {
+        window.location.href = './cart.html';
+      };
     }
   });
 });

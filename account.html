@@ -53,10 +53,38 @@
     @media (min-width: 768px) { .account-content { padding: 0; } }
 
     /* Order cards */
-    .order-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1rem; margin-bottom: 0.75rem; transition: box-shadow 0.2s; }
+    .order-card { border: 1px solid var(--color-border); border-radius: var(--radius-lg); overflow: hidden; margin-bottom: 0.85rem; transition: box-shadow 0.2s; background: white; }
     .order-card:hover { box-shadow: var(--shadow-sm); }
-    .order-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .order-summary-row { padding: 1rem 1.1rem; display: flex; align-items: center; gap: 0.75rem; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+    .order-summary-row:hover { background: var(--color-bg-secondary); }
     .order-meta { font-size: 0.78rem; color: var(--color-text-muted); }
+    .order-toggle-icon { margin-left: auto; color: var(--color-text-muted); transition: transform 0.25s; flex-shrink: 0; }
+    .order-card.expanded .order-toggle-icon { transform: rotate(180deg); }
+    /* Expandable body */
+    .order-body { display: none; border-top: 1px solid var(--color-border); }
+    .order-card.expanded .order-body { display: block; }
+    .order-body-inner { padding: 1.1rem; }
+    /* Status timeline */
+    .order-timeline { display: flex; align-items: center; gap: 0; margin-bottom: 1.25rem; overflow-x: auto; padding-bottom: 0.25rem; }
+    .timeline-step { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 60px; }
+    .timeline-dot { width: 28px; height: 28px; border-radius: 50%; background: var(--color-border); display: flex; align-items: center; justify-content: center; font-size: 0.7rem; color: white; font-weight: 700; flex-shrink: 0; }
+    .timeline-dot.done { background: var(--color-success); }
+    .timeline-dot.active { background: var(--color-accent); box-shadow: 0 0 0 3px rgba(37,99,235,0.18); }
+    .timeline-dot.cancelled { background: var(--color-danger); }
+    .timeline-label { font-size: 0.68rem; color: var(--color-text-muted); margin-top: 0.3rem; text-align: center; white-space: nowrap; }
+    .timeline-label.active { color: var(--color-accent); font-weight: 600; }
+    .timeline-label.done { color: var(--color-success); }
+    .timeline-line { flex: 1; height: 2px; background: var(--color-border); min-width: 20px; }
+    .timeline-line.done { background: var(--color-success); }
+    /* Order items list */
+    .order-item-row { display: flex; gap: 0.85rem; align-items: flex-start; padding: 0.75rem 0; border-bottom: 1px solid var(--color-border); }
+    .order-item-row:last-child { border-bottom: none; }
+    .order-item-img { width: 52px; height: 52px; border-radius: var(--radius-md); object-fit: cover; flex-shrink: 0; background: var(--color-bg-secondary); }
+    /* Payment breakdown */
+    .pay-row { display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 0.4rem; }
+    /* Track button */
+    .track-btn { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: var(--radius-full); background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; font-size: 0.82rem; font-weight: 600; text-decoration: none; transition: all 0.2s; }
+    .track-btn:hover { background: #16a34a; color: white; }
 
     /* Address cards */
     .addresses-grid { display: grid; grid-template-columns: 1fr; gap: 0.75rem; }
@@ -319,32 +347,123 @@
       // ---- ORDERS ----
       const { data: orders } = await supabase
         .from('orders')
-        .select(`*, order_items(*, products(name))`)
+        .select(`*, order_items(*)`)
         .eq('user_id', user.id)
         .order('created_at', { ascending: false });
 
-      const ordersEl = document.getElementById('orders-list');
-      if (!orders || orders.length === 0) {
-        ordersEl.innerHTML = `<div class="empty-state"><div class="icon">📦</div><h3>No orders yet</h3><p class="text-muted" style="margin:0.5rem 0 1.5rem;">Your orders will appear here</p><a href="./shop.html" class="btn btn-primary">Start Shopping</a></div>`;
-      } else {
-        ordersEl.innerHTML = orders.map(o => `
-          <div class="order-card">
-            <div class="order-header">
-              <div>
-                <div style="font-weight:700; font-size:0.85rem;">ORDER #${o.id.substring(0,8).toUpperCase()}</div>
-                <div class="order-meta">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div>
-              </div>
-              <span class="status-badge status-${o.status}">${o.status.charAt(0).toUpperCase() + o.status.slice(1)}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <span class="text-muted" style="font-size:0.85rem;">${o.order_items?.length || 0} item(s)</span>
-              <span style="font-weight:700; font-size:1.05rem;">₹${parseFloat(o.total).toLocaleString('en-IN')}</span>
-            </div>
-          </div>
-        `).join('');
+      const COURIER_URLS = {
+        'Blue Dart': id => `https://www.bluedart.com/tracking?wbns=${id}`,
+        'DTDC': id => `https://www.dtdc.com/track-your-shipment/?trackingNumber=${id}`,
+        'Delhivery': id => `https://www.delhivery.com/tracking/?tracking_id=${id}`,
+        'India Post': id => `https://www.indiapost.gov.in/_layouts/15/dop.portal.tracking/trackconsignment.aspx?id=${id}`,
+        'Shadowfax': id => `https://www.shadowfax.in/track?awb=${id}`,
+        'Ekart': id => `https://www.ekartlogistics.in/track-order?tracking_number=${id}`,
+        'FedEx': id => `https://www.fedex.com/fedextrack/?trknbr=${id}`,
+        'DHL': id => `https://www.dhl.com/in-en/home/tracking.html?tracking-id=${id}`,
+      };
+
+      const STATUS_STEPS = ['confirmed', 'shipped', 'delivered'];
+
+      function getStepState(step, currentStatus) {
+        if (currentStatus === 'cancelled') return step === 'confirmed' ? 'cancelled' : 'none';
+        const currentIdx = STATUS_STEPS.indexOf(currentStatus);
+        const stepIdx = STATUS_STEPS.indexOf(step);
+        if (stepIdx < currentIdx) return 'done';
+        if (stepIdx === currentIdx) return 'active';
+        return 'none';
       }
 
-      // ---- WISHLIST ----
+      function renderTimeline(status) {
+        if (status === 'pending') return '<div style="font-size:0.82rem;color:var(--color-text-muted);padding:0.5rem 0;">⏳ Order is being reviewed...</div>';
+        if (status === 'cancelled') return '<div style="font-size:0.82rem;color:var(--color-danger);font-weight:600;padding:0.5rem 0;">❌ Order Cancelled</div>';
+        const icons = {confirmed:'✓',shipped:'🚚',delivered:'🏠'};
+        const labels = {confirmed:'Confirmed',shipped:'Shipped',delivered:'Delivered'};
+        return '<div class="order-timeline">' + STATUS_STEPS.map((step, i) => {
+          const state = getStepState(step, status);
+          const prevDone = i > 0 ? (getStepState(STATUS_STEPS[i-1], status) === 'done' ? 'done' : '') : '';
+          return (i > 0 ? `<div class="timeline-line ${prevDone}"></div>` : '') +
+            `<div class="timeline-step"><div class="timeline-dot ${state}">${state !== 'none' ? icons[step] : (i+1)}</div><div class="timeline-label ${state}">${labels[step]}</div></div>`;
+        }).join('') + '</div>';
+      }
+
+      function renderOrderCard(o) {
+        const items = o.order_items || [];
+        const trackUrl = o.courier_name && o.tracking_id && COURIER_URLS[o.courier_name]
+          ? COURIER_URLS[o.courier_name](o.tracking_id) : null;
+        const statusColors = {pending:'#6b7280',confirmed:'#4f46e5',shipped:'#d97706',delivered:'#16a34a',cancelled:'#dc2626'};
+        const statusBg = {pending:'#f3f4f6',confirmed:'#e0e7ff',shipped:'#fef3c7',delivered:'#dcfce7',cancelled:'#fee2e2'};
+        const sc = statusColors[o.status] || '#6b7280';
+        const sb = statusBg[o.status] || '#f3f4f6';
+        const firstImg = items[0]?.product_snapshot?.image_url || '';
+        const itemNames = items.map(i => i.product_snapshot?.name || 'Item').slice(0,2).join(', ');
+        const moreCount = items.length > 2 ? ` +${items.length - 2} more` : '';
+
+        const itemsHtml = items.map(item => {
+          const snap = item.product_snapshot || {};
+          return `<div class="order-item-row">
+            ${snap.image_url ? `<img src="${snap.image_url}" class="order-item-img">` : '<div class="order-item-img"></div>'}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:600;font-size:0.88rem;">${snap.name || 'Product'}</div>
+              ${snap.variant_label ? `<div style="font-size:0.78rem;color:var(--color-text-muted);">${snap.variant_label}</div>` : ''}
+              <div style="font-size:0.78rem;color:var(--color-text-muted);">Qty: ${item.quantity}</div>
+            </div>
+            <div style="font-weight:700;font-size:0.9rem;flex-shrink:0;">₹${(item.price_at_purchase * item.quantity).toFixed(0)}</div>
+          </div>`;
+        }).join('');
+
+        const addr = o.shipping_address || {};
+        const addrHtml = addr.name ? `<div style="font-size:0.82rem;color:var(--color-text-muted);">
+          <span style="font-weight:600;color:var(--color-text);">Delivered to: </span>
+          ${addr.name}, ${addr.line1}${addr.line2 ? ', '+addr.line2 : ''}, ${addr.city}, ${addr.state} ${addr.pincode} · 📞 ${addr.phone}
+        </div>` : '';
+
+        return `<div class="order-card" id="ocard-${o.id}">
+          <div class="order-summary-row" onclick="window.toggleOrder('${o.id}')">
+            ${firstImg ? `<img src="${firstImg}" style="width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;">` : '<div style="width:44px;height:44px;border-radius:8px;background:var(--color-bg-secondary);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:1.4rem;">📦</div>'}
+            <div style="flex:1;min-width:0;">
+              <div style="font-weight:700;font-size:0.82rem;margin-bottom:0.15rem;">ORDER #${o.id.substring(0,8).toUpperCase()}</div>
+              <div class="order-meta" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${itemNames}${moreCount}</div>
+              <div class="order-meta">${new Date(o.created_at).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'})}</div>
+            </div>
+            <div style="text-align:right;flex-shrink:0;">
+              <div style="font-weight:700;font-size:1rem;">₹${parseFloat(o.total).toLocaleString('en-IN')}</div>
+              <span style="display:inline-block;margin-top:0.25rem;padding:0.2rem 0.6rem;border-radius:999px;font-size:0.7rem;font-weight:700;background:${sb};color:${sc};text-transform:capitalize;">${o.status}</span>
+            </div>
+            <svg class="order-toggle-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"></polyline></svg>
+          </div>
+          <div class="order-body">
+            <div class="order-body-inner">
+              ${renderTimeline(o.status)}
+              ${trackUrl ? `<div style="margin-bottom:1.1rem;"><a href="${trackUrl}" target="_blank" rel="noopener" class="track-btn">🚚 Track Package — ${o.courier_name} (${o.tracking_id})</a></div>` : ''}
+              <div style="font-weight:700;font-size:0.85rem;margin-bottom:0.5rem;">Items Ordered</div>
+              <div style="margin-bottom:1.1rem;">${itemsHtml}</div>
+              <div style="background:var(--color-bg-secondary);border-radius:var(--radius-md);padding:0.85rem;margin-bottom:1rem;">
+                <div style="font-weight:700;font-size:0.85rem;margin-bottom:0.6rem;">Payment Summary</div>
+                <div class="pay-row"><span class="text-muted">Subtotal</span><span>₹${parseFloat(o.subtotal).toLocaleString('en-IN')}</span></div>
+                ${o.discount > 0 ? `<div class="pay-row"><span class="text-muted">Discount ${o.coupon_code ? '('+o.coupon_code+')' : ''}</span><span style="color:var(--color-success);">-₹${parseFloat(o.discount).toLocaleString('en-IN')}</span></div>` : ''}
+                <div class="pay-row"><span class="text-muted">Shipping</span><span>${o.shipping_charge == 0 ? '<span style=\"color:var(--color-success)\">FREE</span>' : '₹'+o.shipping_charge}</span></div>
+                <div class="pay-row" style="font-weight:700;font-size:0.95rem;border-top:1px solid var(--color-border);padding-top:0.5rem;margin-top:0.25rem;"><span>Total Paid</span><span style="color:var(--color-accent);">₹${parseFloat(o.total).toLocaleString('en-IN')}</span></div>
+                <div class="pay-row" style="margin-top:0.3rem;"><span class="text-muted">Payment</span><span>${o.razorpay_payment_id ? '💳 Online' : '💵 Cash on Delivery'}</span></div>
+              </div>
+              ${addrHtml}
+            </div>
+          </div>
+        </div>`;
+      }
+
+      const ordersEl = document.getElementById('orders-list');
+      if (!orders || orders.length === 0) {
+        ordersEl.innerHTML = '<div class="empty-state"><div class="icon">📦</div><h3>No orders yet</h3><p class="text-muted" style="margin:0.5rem 0 1.5rem;">Your orders will appear here</p><a href="./shop.html" class="btn btn-primary">Start Shopping</a></div>';
+      } else {
+        ordersEl.innerHTML = orders.map(renderOrderCard).join('');
+      }
+
+      window.toggleOrder = function(id) {
+        const card = document.getElementById('ocard-' + id);
+        if (card) card.classList.toggle('expanded');
+      };
+
+            // ---- WISHLIST ----
       const { data: wl } = await supabase
         .from('wishlist')
         .select('product_id, products(*, product_media(url, sort_order))')

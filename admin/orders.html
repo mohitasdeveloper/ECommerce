@@ -227,14 +227,33 @@
     }
 
     async function loadOrders() {
-      const { data } = await supabase.from('orders')
+      const tbody = document.getElementById('orders-tbody');
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem;">Loading orders...</td></tr>';
+
+      // Try with profiles join first (works once admin RLS is applied)
+      let { data, error } = await supabase.from('orders')
         .select('*, user:profiles(full_name, email)')
         .order('created_at', { ascending: false });
 
-      const tbody = document.getElementById('orders-tbody');
+      // If profile join fails (RLS not yet applied), fall back to orders only
+      if (error) {
+        console.warn('Profile join failed, trying without join:', error.message);
+        const res = await supabase.from('orders')
+          .select('*')
+          .order('created_at', { ascending: false });
+        data = res.data;
+        if (res.error) {
+          console.error('Orders load error:', res.error);
+          tbody.innerHTML = `<tr><td colspan="8" style="color:red; padding:1rem;">
+            Error loading orders: ${res.error.message}<br>
+            <small>Run <strong>rls-admin-fix.sql</strong> in your Supabase SQL Editor to fix this.</small>
+          </td></tr>`;
+          return;
+        }
+      }
       
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8">No orders found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:2rem; color:var(--color-text-muted);">No orders found.</td></tr>';
         return;
       }
 
@@ -242,30 +261,31 @@
 
       tbody.innerHTML = data.map(o => {
         const cName = o.user ? o.user.full_name : (o.shipping_address ? o.shipping_address.name : 'Unknown');
-        const cEmail = o.user ? o.user.email : '';
+        const cEmail = o.user ? o.user.email : (o.shipping_address?.phone ? '📞 ' + o.shipping_address.phone : '');
         const sc = getStatusColor(o.status);
         const hasTracking = o.courier_name && o.tracking_id;
+        const date = new Date(o.created_at).toLocaleDateString('en-IN', {day:'2-digit', month:'short', year:'numeric'});
 
         return `
           <tr>
-            <td class="fw-bold">#${o.id.split('-')[0].toUpperCase()}</td>
+            <td class="fw-bold" style="font-size:0.8rem; font-family:monospace;">#${o.id.split('-')[0].toUpperCase()}</td>
             <td>
-              <div>${cName}</div>
+              <div style="font-weight:600;">${cName}</div>
               <div class="text-muted text-sm">${cEmail}</div>
             </td>
-            <td>${new Date(o.created_at).toLocaleDateString('en-IN')}</td>
-            <td class="fw-bold">₹${o.total}</td>
-            <td><span class="badge-stock in-stock text-sm">${o.razorpay_payment_id ? 'Paid' : 'COD'}</span></td>
+            <td style="white-space:nowrap;">${date}</td>
+            <td class="fw-bold">₹${parseFloat(o.total).toLocaleString('en-IN')}</td>
+            <td><span class="badge-stock ${o.razorpay_payment_id ? 'in-stock' : ''} text-sm">${o.razorpay_payment_id ? '💳 Paid' : '💵 COD'}</span></td>
             <td>
               ${hasTracking 
                 ? `<span style="font-size:0.78rem; color:var(--color-success); font-weight:600;">✓ ${o.courier_name}</span>` 
                 : `<span class="text-muted text-sm">—</span>`}
             </td>
             <td>
-              <span class="badge-stock" style="background:${sc.bg};color:${sc.text};text-transform:capitalize;">${o.status}</span>
+              <span class="badge-stock" style="background:${sc.bg};color:${sc.text};text-transform:capitalize;font-weight:700;">${o.status}</span>
             </td>
             <td>
-              <button class="btn btn-outline btn-sm" onclick="window.viewOrder('${o.id}')">Manage</button>
+              <button class="btn btn-primary btn-sm" onclick="window.viewOrder('${o.id}')">Manage</button>
             </td>
           </tr>
         `;

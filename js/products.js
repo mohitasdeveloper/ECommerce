@@ -94,9 +94,10 @@ export function renderProductCards(products, containerId) {
               <span class="product-price">₹${product.price}</span>
               ${product.compare_price && product.compare_price > product.price ? `<span class="compare-price">₹${product.compare_price}</span>` : ''}
             </div>
-            <button class="btn btn-primary btn-sm add-to-cart-btn" data-id="${product.id}" ${product.stock_status === 'out_of_stock' ? 'disabled' : ''}>
-              ${product.stock_status === 'out_of_stock' ? 'Out of Stock' : 'Add to Cart'}
-            </button>
+            ${product.stock_status === 'out_of_stock' 
+              ? `<span style="font-size:0.78rem; color:var(--color-danger); font-weight:600;">Out of Stock</span>`
+              : ``
+            }
           </div>
         </div>
       </div>
@@ -120,20 +121,7 @@ export function renderProductCards(products, containerId) {
     });
   });
 
-  container.querySelectorAll('.add-to-cart-btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      const productId = btn.getAttribute('data-id');
-      const product = products.find(p => p.id === productId);
-      
-      // If product might have variants, ideally we route them to product page.
-      // For simplicity here, we add base product. Real implementation checks variant table.
-      // Here, we just add the base product.
-      if (product) {
-        addToCart(product);
-      }
-    });
-  });
+
 }
 
 // Global listener for wishlist updates from other components

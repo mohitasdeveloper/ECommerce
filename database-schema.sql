@@ -97,6 +97,11 @@ create table products (
   stock_status text default 'in_stock' check (stock_status in ('in_stock','out_of_stock')),
   is_featured boolean default false,
   is_published boolean default true,
+  brand text,
+  weight_grams numeric,
+  length_cm numeric,
+  width_cm numeric,
+  height_cm numeric,
   created_at timestamptz default now()
 );
 

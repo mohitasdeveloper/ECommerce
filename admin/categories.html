@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Categories - Admin</title>
+    <link rel="stylesheet" href="../css/main.css">
+    <link rel="stylesheet" href="../css/admin.css">
+</head>
+
+<body>
+    <div class="admin-layout">
+        <aside class="admin-sidebar">
+            <div class="admin-logo">Admin Panel</div>
+            <nav class="admin-nav">
+                <a href="index.html">Dashboard</a>
+                <a href="products.html">Products</a>
+                <a href="categories.html" class="active">Categories</a>
+                <a href="orders.html">Orders</a>
+                <a href="coupons.html">Coupons</a>
+                <a href="reviews.html">Reviews</a>
+                <a href="blog.html">Blog</a>
+                <a href="settings.html">Settings</a>
+            </nav>
+        </aside>
+
+        <main class="admin-main">
+            <header class="admin-header">
+                <h1 style="font-size: 1.25rem; margin: 0;">Categories</h1>
+                <button id="add-cat-btn" class="btn btn-primary btn-sm">+ Add Category</button>
+            </header>
+
+            <div class="admin-content">
+                <div class="table-container">
+                    <table style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Category Name</th>
+                                <th>Slug</th>
+                                <th>Parent</th>
+                                <th>Sort Order</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="categories-tbody">
+                            <tr>
+                                <td colspan="5">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="cat-modal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="d-flex justify-between align-center mb-4 pb-3"
+                style="border-bottom:1px solid var(--color-border);">
+                <h2 id="modal-title" style="margin:0;">Add Category</h2>
+                <button type="button" id="close-modal-btn" class="btn"
+                    style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
+            </div>
+            <form id="cat-form">
+                <input type="hidden" id="cat-id">
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Name</label>
+                    <input type="text" id="cat-name" class="form-control" required placeholder="e.g. Electronics">
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Slug</label>
+                    <input type="text" id="cat-slug" class="form-control" required placeholder="e.g. electronics">
+                </div>
+
+                <div class="form-group mb-4 pb-4" style="border-bottom:1px solid var(--color-border);">
+                    <label class="form-label">Parent Category</label>
+                    <select id="cat-parent" class="form-control">
+                        <option value="">None (Top Level)</option>
+                    </select>
+                    <div class="text-sm text-muted mt-1">Select a parent to make this a sub-category.</div>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label">Sort Order</label>
+                    <input type="number" id="cat-sort" class="form-control" value="0">
+                </div>
+
+                <div class="d-flex justify-end gap-3 mt-4">
+                    <button type="button" class="btn btn-outline"
+                        onclick="document.getElementById('cat-modal').classList.remove('active')">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="save-cat-btn">Save Category</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initAuth } from '../js/auth.js';
+        import { checkAdmin } from '../js/admin.js';
+        import { supabase } from '../js/supabase.js';
+        import { showToast } from '../js/toast.js';
+
+        async function init() {
+            await initAuth();
+            await checkAdmin();
+            loadCategories();
+
+            document.getElementById('add-cat-btn').addEventListener('click', () => {
+                document.getElementById('cat-form').reset();
+                document.getElementById('cat-id').value = '';
+                document.getElementById('modal-title').textContent = 'Add Category';
+                document.getElementById('cat-modal').classList.add('active');
+            });
+
+            document.getElementById('close-modal-btn').addEventListener('click', () => {
+                document.getElementById('cat-modal').classList.remove('active');
+            });
+
+            // Auto slug
+            document.getElementById('cat-name').addEventListener('input', (e) => {
+                if (!document.getElementById('cat-id').value) {
+                    document.getElementById('cat-slug').value = e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+                }
+            });
+
+            document.getElementById('cat-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const btn = document.getElementById('save-cat-btn');
+                btn.disabled = true; btn.textContent = 'Saving...';
+
+                const id = document.getElementById('cat-id').value;
+                const data = {
+                    name: document.getElementById('cat-name').value,
+                    slug: document.getElementById('cat-slug').value,
+                    parent_id: document.getElementById('cat-parent').value || null,
+                    sort_order: parseInt(document.getElementById('cat-sort').value) || 0
+                };
+
+                const { error } = id ? await supabase.from('categories').update(data).eq('id', id) : await supabase.from('categories').insert([data]);
+
+                btn.disabled = false; btn.textContent = 'Save Category';
+                if (error) { showToast(error.message, 'error'); }
+                else { showToast('Category saved', 'success'); document.getElementById('cat-modal').classList.remove('active'); loadCategories(); }
+            });
+        }
+
+        async function loadCategories() {
+            const { data } = await supabase.from('categories').select('*').order('sort_order');
+            if (!data) return;
+
+            const parents = data.filter(c => !c.parent_id);
+            let tableHtml = '', selectHtml = '<option value="">None (Top Level)</option>';
+
+            parents.forEach(p => {
+                tableHtml += `<tr><td class="fw-bold">${p.name}</td><td class="text-muted text-sm">${p.slug}</td><td>-</td><td>${p.sort_order}</td><td><button class="btn btn-outline btn-sm" onclick="window.editCat('${p.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="window.deleteCat('${p.id}')">Delete</button></td></tr>`;
+                selectHtml += `<option value="${p.id}">${p.name}</option>`;
+                const children = data.filter(c => c.parent_id === p.id);
+                children.forEach(c => {
+                    tableHtml += `<tr style="background:var(--color-bg-secondary);"><td style="padding-left: 2rem;">↳ ${c.name}</td><td class="text-muted text-sm">${c.slug}</td><td><span class="badge-stock in-stock" style="background:#e0e7ff;color:#4f46e5;">${p.name}</span></td><td>${c.sort_order}</td><td><button class="btn btn-outline btn-sm" onclick="window.editCat('${c.id}')">Edit</button> <button class="btn btn-danger btn-sm" onclick="window.deleteCat('${c.id}')">Delete</button></td></tr>`;
+                });
+            });
+
+            document.getElementById('categories-tbody').innerHTML = tableHtml || '<tr><td colspan="5">No categories found.</td></tr>';
+            document.getElementById('cat-parent').innerHTML = selectHtml;
+
+            window.editCat = (id) => {
+                const c = data.find(x => x.id === id); if (!c) return;
+                document.getElementById('cat-id').value = c.id; document.getElementById('cat-name').value = c.name; document.getElementById('cat-slug').value = c.slug; document.getElementById('cat-parent').value = c.parent_id || ''; document.getElementById('cat-sort').value = c.sort_order;
+                document.getElementById('modal-title').textContent = 'Edit Category'; document.getElementById('cat-modal').classList.add('active');
+            };
+            window.deleteCat = async (id) => {
+                if (!confirm('Delete this category?')) return;
+                const { error } = await supabase.from('categories').delete().eq('id', id);
+                if (error) showToast(error.message, 'error'); else { showToast('Deleted', 'info'); loadCategories(); }
+            };
+        }
+        init();
+    </script>
+</body>
+
+</html>

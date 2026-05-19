@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Manage Products - Admin</title>
@@ -7,6 +8,7 @@
   <link rel="stylesheet" href="../css/admin.css">
   <script src="https://upload-widget.cloudinary.com/global/all.js" type="text/javascript"></script>
 </head>
+
 <body>
   <div class="admin-layout">
     <aside class="admin-sidebar">
@@ -14,6 +16,7 @@
       <nav class="admin-nav">
         <a href="index.html">Dashboard</a>
         <a href="products.html" class="active">Products</a>
+        <a href="categories.html">Categories</a>
         <a href="orders.html">Orders</a>
         <a href="coupons.html">Coupons</a>
         <a href="reviews.html">Reviews</a>
@@ -31,7 +34,8 @@
       <div class="admin-content">
         <!-- Search & Filters -->
         <div class="d-flex gap-4 mb-4">
-          <input type="text" id="search-products" class="form-control" placeholder="Search by name or slug..." style="flex: 2;">
+          <input type="text" id="search-products" class="form-control" placeholder="Search by name or slug..."
+            style="flex: 2;">
           <select id="filter-category" class="form-control" style="flex: 1;">
             <option value="">All Categories</option>
           </select>
@@ -56,7 +60,9 @@
               </tr>
             </thead>
             <tbody id="products-tbody">
-              <tr><td colspan="6">Loading...</td></tr>
+              <tr>
+                <td colspan="6">Loading...</td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -69,11 +75,12 @@
     <div class="modal-content">
       <div class="d-flex justify-between align-center mb-4">
         <h2 id="modal-title">Add Product</h2>
-        <button type="button" id="close-modal-btn" class="btn" style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
+        <button type="button" id="close-modal-btn" class="btn"
+          style="padding:0.5rem; border-radius:50%; width:36px; height:36px; display:flex; align-items:center; justify-content:center; background:var(--color-bg-secondary);">✕</button>
       </div>
       <form id="product-form">
         <input type="hidden" id="prod-id">
-        
+
         <!-- Basic Info -->
         <div class="admin-section-title">Basic Information</div>
         <div class="d-flex gap-4 mb-4">
@@ -102,6 +109,10 @@
               <option value="">Select...</option>
             </select>
           </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Brand</label>
+            <input type="text" id="prod-brand" class="form-control" placeholder="e.g. Samsung">
+          </div>
         </div>
 
         <div class="form-group mb-4">
@@ -111,7 +122,8 @@
 
         <div class="d-flex gap-4 mb-4 pb-4" style="border-bottom: 1px solid var(--color-border);">
           <label class="d-flex align-center gap-2">
-            <span class="toggle"><input type="checkbox" id="prod-stock" checked><span class="toggle-slider"></span></span>
+            <span class="toggle"><input type="checkbox" id="prod-stock" checked><span
+                class="toggle-slider"></span></span>
             <span style="font-weight:500;">In Stock (Base)</span>
           </label>
           <label class="d-flex align-center gap-2">
@@ -119,9 +131,31 @@
             <span style="font-weight:500;">Featured</span>
           </label>
           <label class="d-flex align-center gap-2">
-            <span class="toggle"><input type="checkbox" id="prod-published" checked><span class="toggle-slider"></span></span>
+            <span class="toggle"><input type="checkbox" id="prod-published" checked><span
+                class="toggle-slider"></span></span>
             <span style="font-weight:500;">Published</span>
           </label>
+        </div>
+
+        <!-- Shipping & Dimensions -->
+        <div class="admin-section-title">Shipping & Dimensions (For Courier)</div>
+        <div class="d-flex gap-4 mb-4">
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Weight (g)</label>
+            <input type="number" id="prod-weight" class="form-control" placeholder="e.g. 500">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Length (cm)</label>
+            <input type="number" id="prod-length" class="form-control" placeholder="e.g. 20">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Width (cm)</label>
+            <input type="number" id="prod-width" class="form-control" placeholder="e.g. 15">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label class="form-label">Height (cm)</label>
+            <input type="number" id="prod-height" class="form-control" placeholder="e.g. 10">
+          </div>
         </div>
 
         <!-- Media -->
@@ -143,17 +177,20 @@
             This product has variants
           </label>
         </div>
-        <div id="variants-section" style="display:none; background:var(--color-bg-secondary); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--color-border); margin-bottom:1.5rem;">
+        <div id="variants-section"
+          style="display:none; background:var(--color-bg-secondary); padding:1.5rem; border-radius:var(--radius-md); border:1px solid var(--color-border); margin-bottom:1.5rem;">
           <div class="mb-4">
             <h4 class="mb-2" style="font-size:1rem;">Option Types</h4>
             <div id="option-types-container" class="d-flex flex-column gap-3 mb-3"></div>
-            <button type="button" class="btn btn-outline btn-sm" id="add-option-type-btn">+ Add Option Type (e.g. Size, Color)</button>
+            <button type="button" class="btn btn-outline btn-sm" id="add-option-type-btn">+ Add Option Type (e.g. Size,
+              Color)</button>
           </div>
-          
+
           <div id="variants-table-container" style="display:none;">
             <div class="d-flex justify-between align-center mb-2 mt-4">
               <h4 style="font-size:1rem; margin:0;">Variant Combinations</h4>
-              <button type="button" class="btn btn-outline btn-sm" id="generate-variants-btn">Generate Combinations</button>
+              <button type="button" class="btn btn-outline btn-sm" id="generate-variants-btn">Generate
+                Combinations</button>
             </div>
             <div class="variant-table-wrap">
               <table style="width:100%;">
@@ -174,10 +211,11 @@
 
         <!-- Product Details -->
         <div class="admin-section-title">Product Details (Tabs)</div>
-        
+
         <div class="form-group mb-4">
           <label class="form-label">Specifications (Key-Value)</label>
-          <div id="specs-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem;"></div>
+          <div id="specs-container" style="display: flex; flex-direction: column; gap: 0.5rem; margin-bottom: 0.5rem;">
+          </div>
           <button type="button" class="btn btn-outline btn-sm" id="add-spec-btn">+ Add Row</button>
         </div>
 
@@ -185,7 +223,7 @@
           <label class="form-label">Care Instructions (Markdown)</label>
           <textarea id="detail-care" class="form-control" rows="2"></textarea>
         </div>
-        
+
         <div class="form-group mb-4">
           <label class="form-label">What's in the Box (Markdown)</label>
           <textarea id="detail-box" class="form-control" rows="2"></textarea>
@@ -194,16 +232,20 @@
         <div class="d-flex gap-4 mb-4">
           <div class="form-group" style="flex:1;">
             <label class="form-label">Custom Shipping Policy</label>
-            <textarea id="detail-shipping" class="form-control" rows="2" placeholder="Leave blank to use global policy"></textarea>
+            <textarea id="detail-shipping" class="form-control" rows="2"
+              placeholder="Leave blank to use global policy"></textarea>
           </div>
           <div class="form-group" style="flex:1;">
             <label class="form-label">Custom Return Policy</label>
-            <textarea id="detail-return" class="form-control" rows="2" placeholder="Leave blank to use global policy"></textarea>
+            <textarea id="detail-return" class="form-control" rows="2"
+              placeholder="Leave blank to use global policy"></textarea>
           </div>
         </div>
 
-        <div class="d-flex justify-end gap-3 mt-6 pt-4" style="border-top:1px solid var(--color-border); position:sticky; bottom:0; background:white; padding-bottom:1rem; z-index:10;">
-          <button type="button" class="btn btn-outline" onclick="document.getElementById('product-modal').classList.remove('active')">Cancel</button>
+        <div class="d-flex justify-end gap-3 mt-6 pt-4"
+          style="border-top:1px solid var(--color-border); position:sticky; bottom:0; background:white; padding-bottom:1rem; z-index:10;">
+          <button type="button" class="btn btn-outline"
+            onclick="document.getElementById('product-modal').classList.remove('active')">Cancel</button>
           <button type="submit" class="btn btn-primary" id="save-product-btn">Save Product</button>
         </div>
       </form>
@@ -293,13 +335,21 @@
 
     /* --- DATA LOADING --- */
     async function loadCategories() {
-      const { data } = await supabase.from('categories').select('*').order('name');
+      const { data } = await supabase.from('categories').select('*').order('sort_order');
       if (data) {
         const catSelects = [document.getElementById('prod-category'), document.getElementById('filter-category')];
+
+        const parentCats = data.filter(c => !c.parent_id);
+        const optionsHtml = parentCats.map(p => {
+          const children = data.filter(c => c.parent_id === p.id);
+          let html = `<option value="${p.id}" style="font-weight:600;">${p.name}</option>`;
+          children.forEach(c => { html += `<option value="${c.id}">&nbsp;&nbsp;↳ ${c.name}</option>`; });
+          return html;
+        }).join('');
+
         catSelects.forEach(sel => {
-          data.forEach(c => {
-            sel.innerHTML += `<option value="${c.id}">${c.name}</option>`;
-          });
+          const firstOpt = sel.firstElementChild ? sel.firstElementChild.outerHTML : '';
+          sel.innerHTML = firstOpt + optionsHtml;
         });
       }
     }
@@ -308,7 +358,7 @@
       const { data } = await supabase.from('products')
         .select('*, category:categories(name), media:product_media(url)')
         .order('created_at', { ascending: false });
-      
+
       if (data) allProducts = data;
       renderProductsTable();
     }
@@ -332,7 +382,7 @@
       }
 
       tbody.innerHTML = filtered.map(p => {
-        const img = p.media && p.media.length > 0 ? p.media.sort((a,b)=>a.sort_order - b.sort_order)[0].url : 'https://placehold.co/40x40?text=N/A';
+        const img = p.media && p.media.length > 0 ? p.media.sort((a, b) => a.sort_order - b.sort_order)[0].url : 'https://placehold.co/40x40?text=N/A';
         return `
           <tr>
             <td>
@@ -371,20 +421,20 @@
       existing.forEach(e => e.remove());
 
       const addBtn = document.getElementById('upload-media-btn');
-      
+
       uploadedMedia.forEach((m, idx) => {
         const div = document.createElement('div');
         div.className = 'media-item';
         div.draggable = true;
         div.innerHTML = `
-          ${m.type === 'video' 
-            ? `<video src="${m.url}"></video>` 
+          ${m.type === 'video'
+            ? `<video src="${m.url}"></video>`
             : `<img src="${m.url}">`
           }
           <div class="media-delete" onclick="window.removeMedia(${idx})">✕</div>
           ${idx === 0 ? '<div style="position:absolute;bottom:0;left:0;right:0;background:var(--color-accent);color:white;text-align:center;font-size:0.7rem;padding:2px;">PRIMARY</div>' : ''}
         `;
-        
+
         // Drag events
         div.addEventListener('dragstart', (e) => {
           draggedMediaIndex = idx;
@@ -430,9 +480,9 @@
           <div class="d-flex gap-3 mb-3">
             <input type="text" class="form-control" placeholder="Option Name (e.g. Size)" value="${ot.name}" oninput="window.optionTypes[${i}].name=this.value" style="flex:2;">
             <select class="form-control" onchange="window.optionTypes[${i}].display_type=this.value" style="flex:1;">
-              <option value="button" ${ot.display_type==='button'?'selected':''}>Pill Buttons</option>
-              <option value="swatch" ${ot.display_type==='swatch'?'selected':''}>Color Swatches</option>
-              <option value="dropdown" ${ot.display_type==='dropdown'?'selected':''}>Dropdown</option>
+              <option value="button" ${ot.display_type === 'button' ? 'selected' : ''}>Pill Buttons</option>
+              <option value="swatch" ${ot.display_type === 'swatch' ? 'selected' : ''}>Color Swatches</option>
+              <option value="dropdown" ${ot.display_type === 'dropdown' ? 'selected' : ''}>Dropdown</option>
             </select>
             <button type="button" class="btn btn-outline" style="color:var(--color-danger); border-color:var(--color-danger);" onclick="window.removeOptionType(${i})">Remove</button>
           </div>
@@ -449,17 +499,17 @@
           </div>
         </div>
       `).join('');
-      
+
       document.getElementById('variants-table-container').style.display = window.optionTypes.length > 0 ? 'block' : 'none';
     }
 
     function generateVariantCombinations() {
       // Filter out incomplete types/values
       const validTypes = window.optionTypes.filter(ot => ot.name.trim() !== '' && ot.values.some(v => v.trim() !== ''));
-      if(validTypes.length === 0) return;
+      if (validTypes.length === 0) return;
 
       const arraysToCombine = validTypes.map(ot => ot.values.filter(v => v.trim() !== '').map(v => ({ typeId: ot.id, typeName: ot.name, value: v })));
-      
+
       const combinations = arraysToCombine.reduce((a, b) => a.flatMap(x => b.map(y => [...x, y])), [[]]);
 
       const basePrice = document.getElementById('prod-price').value || 0;
@@ -467,12 +517,12 @@
 
       window.generatedVariants = combinations.map(combo => {
         const label = combo.map(c => c.value).join(' / ');
-        
+
         // Preserve existing data if it exists for this combination
         const existing = window.generatedVariants.find(v => v.label === label);
-        
+
         return {
-          id: existing?.id || 'new_' + Math.random().toString(36).substr(2,9),
+          id: existing?.id || 'new_' + Math.random().toString(36).substr(2, 9),
           label,
           combo,
           sku: existing?.sku || '',
@@ -499,7 +549,7 @@
           <td>
             <select class="form-control" onchange="window.generatedVariants[${i}].media_id=this.value">
               <option value="">No specific image</option>
-              ${uploadedMedia.map((m, midx) => `<option value="${m.id}" ${v.media_id === m.id ? 'selected' : ''}>Image ${midx+1}</option>`).join('')}
+              ${uploadedMedia.map((m, midx) => `<option value="${m.id}" ${v.media_id === m.id ? 'selected' : ''}>Image ${midx + 1}</option>`).join('')}
             </select>
           </td>
         </tr>
@@ -519,25 +569,25 @@
     }
 
     /* --- MAIN FORM ACTIONS --- */
-    window.openModal = function() {
+    window.openModal = function () {
       document.getElementById('product-form').reset();
       document.getElementById('prod-id').value = '';
       document.getElementById('modal-title').textContent = 'Add Product';
-      
+
       uploadedMedia = []; renderMediaGallery();
       window.optionTypes = []; window.renderOptionTypes();
       window.generatedVariants = []; window.renderVariantsTable();
       window.specs = []; window.renderSpecs();
-      
+
       document.getElementById('has-variants').checked = false;
       document.getElementById('variants-section').style.display = 'none';
-      
+
       document.getElementById('product-modal').classList.add('active');
     }
 
-    window.editProduct = async function(id) {
+    window.editProduct = async function (id) {
       showToast('Loading product details...', 'info');
-      
+
       // Fetch full product hierarchy
       const { data: p, error } = await supabase.from('products').select(`
         *,
@@ -555,13 +605,18 @@
       document.getElementById('prod-price').value = p.price;
       document.getElementById('prod-compare').value = p.compare_price || '';
       document.getElementById('prod-category').value = p.category_id || '';
+      document.getElementById('prod-brand').value = p.brand || '';
+      document.getElementById('prod-weight').value = p.weight_grams || '';
+      document.getElementById('prod-length').value = p.length_cm || '';
+      document.getElementById('prod-width').value = p.width_cm || '';
+      document.getElementById('prod-height').value = p.height_cm || '';
       document.getElementById('prod-desc').value = p.description || '';
       document.getElementById('prod-stock').checked = p.stock_status === 'in_stock';
       document.getElementById('prod-featured').checked = p.is_featured;
       document.getElementById('prod-published').checked = p.is_published;
 
       // Media
-      uploadedMedia = (p.media || []).sort((a,b)=>a.sort_order - b.sort_order).map(m => ({...m, id: m.id}));
+      uploadedMedia = (p.media || []).sort((a, b) => a.sort_order - b.sort_order).map(m => ({ ...m, id: m.id }));
       renderMediaGallery();
 
       // Details
@@ -572,7 +627,7 @@
         document.getElementById('detail-shipping').value = det.shipping_policy || '';
         document.getElementById('detail-return').value = det.return_policy || '';
         if (det.specifications) {
-          window.specs = Array.isArray(det.specifications) ? det.specifications : Object.entries(det.specifications).map(([k,v])=>({key:k, value:v}));
+          window.specs = Array.isArray(det.specifications) ? det.specifications : Object.entries(det.specifications).map(([k, v]) => ({ key: k, value: v }));
         } else { window.specs = []; }
       } else {
         document.getElementById('detail-care').value = '';
@@ -587,9 +642,9 @@
       if (p.option_types && p.option_types.length > 0) {
         document.getElementById('has-variants').checked = true;
         document.getElementById('variants-section').style.display = 'block';
-        
-        window.optionTypes = p.option_types.sort((a,b)=>a.sort_order - b.sort_order).map(ot => {
-          const sortedVals = ot.values.sort((a,b)=>a.sort_order - b.sort_order);
+
+        window.optionTypes = p.option_types.sort((a, b) => a.sort_order - b.sort_order).map(ot => {
+          const sortedVals = ot.values.sort((a, b) => a.sort_order - b.sort_order);
           return {
             id: ot.id,
             name: ot.name,
@@ -606,10 +661,10 @@
           window.generatedVariants = p.variants.map(v => {
             // Rebuild label from value IDs
             let labelParts = [];
-            if(v.option_value_ids) {
+            if (v.option_value_ids) {
               window.optionTypes.forEach(ot => {
                 const idx = ot.valueIds.findIndex(vid => v.option_value_ids.includes(vid));
-                if(idx !== -1) labelParts.push(ot.values[idx]);
+                if (idx !== -1) labelParts.push(ot.values[idx]);
               });
             }
             return {
@@ -640,14 +695,14 @@
 
     async function saveProduct(e) {
       e.preventDefault();
-      
+
       const hasVariants = document.getElementById('has-variants').checked;
       if (hasVariants) {
-        if(window.optionTypes.length === 0 || window.generatedVariants.length === 0) {
+        if (window.optionTypes.length === 0 || window.generatedVariants.length === 0) {
           showToast('Please define variants or uncheck "This product has variants"', 'warning');
           return;
         }
-        if(window.generatedVariants.some(v => !v.price)) {
+        if (window.generatedVariants.some(v => !v.price)) {
           showToast('All variants must have a price', 'warning');
           return;
         }
@@ -663,6 +718,11 @@
           name: document.getElementById('prod-name').value,
           slug: document.getElementById('prod-slug').value,
           category_id: document.getElementById('prod-category').value || null,
+          brand: document.getElementById('prod-brand').value || null,
+          weight_grams: document.getElementById('prod-weight').value || null,
+          length_cm: document.getElementById('prod-length').value || null,
+          width_cm: document.getElementById('prod-width').value || null,
+          height_cm: document.getElementById('prod-height').value || null,
           description: document.getElementById('prod-desc').value,
           price: document.getElementById('prod-price').value,
           compare_price: document.getElementById('prod-compare').value || null,
@@ -716,19 +776,19 @@
         }
 
         if (hasVariants) {
-          for (let i=0; i<window.optionTypes.length; i++) {
+          for (let i = 0; i < window.optionTypes.length; i++) {
             const ot = window.optionTypes[i];
             const { data: insertedOt } = await supabase.from('product_option_types').insert({
               product_id: productId, name: ot.name, display_type: ot.display_type, sort_order: i
             }).select().single();
-            
+
             // Insert values
-            for (let j=0; j<ot.values.length; j++) {
-              if(!ot.values[j].trim()) continue;
+            for (let j = 0; j < ot.values.length; j++) {
+              if (!ot.values[j].trim()) continue;
               const { data: insertedVal } = await supabase.from('product_option_values').insert({
                 option_type_id: insertedOt.id, value: ot.values[j], color_hex: ot.colors?.[j] || null, sort_order: j
               }).select().single();
-              
+
               // We need to map the combo string to the actual DB UUID
               ot.dbValueMap = ot.dbValueMap || {};
               ot.dbValueMap[ot.values[j]] = insertedVal.id;
@@ -739,14 +799,14 @@
           const variantInserts = window.generatedVariants.map(v => {
             // Find the UUIDs for this combo
             const valueIds = [];
-            if(v.combo) {
+            if (v.combo) {
               v.combo.forEach(c => {
                 const ot = window.optionTypes.find(t => t.name === c.typeName);
-                if(ot && ot.dbValueMap) valueIds.push(ot.dbValueMap[c.value]);
+                if (ot && ot.dbValueMap) valueIds.push(ot.dbValueMap[c.value]);
               });
             } else if (v.original_value_ids) {
               // Fallback for edit without generating combinations again
-               valueIds.push(...v.original_value_ids);
+              valueIds.push(...v.original_value_ids);
             }
 
             return {
@@ -779,4 +839,5 @@
     init();
   </script>
 </body>
+
 </html>

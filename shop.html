@@ -31,10 +31,27 @@
       top: 5rem;
     }
 
+    .filter-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
     .filter-title {
       font-weight: 600;
-      font-size: 1rem;
-      margin-bottom: 1rem;
+      font-size: 1.1rem;
+      margin-bottom: 0;
+    }
+
+    .filter-close-btn {
+      display: none;
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      line-height: 1;
+      color: var(--color-text-muted);
     }
 
     .filter-group {
@@ -78,16 +95,64 @@
       display: none;
     }
 
+    .filter-overlay {
+      display: none;
+    }
+
+    .sort-label {
+      font-size: 0.875rem;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+    }
+
     @media (max-width: 767px) {
       .filter-toggle-btn {
         display: inline-flex;
       }
 
-      .filter-sidebar {
+      .sort-label {
         display: none;
       }
 
+      .filter-sidebar {
+        position: fixed;
+        top: 0;
+        left: -100%;
+        width: 300px;
+        max-width: 80vw;
+        height: 100vh;
+        z-index: 1000;
+        border-radius: 0;
+        border: none;
+        transition: left 0.3s ease;
+        overflow-y: auto;
+        box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+      }
+
       .filter-sidebar.open {
+        left: 0;
+      }
+
+      .filter-overlay {
+        display: block;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999;
+        opacity: 0;
+        visibility: hidden;
+        transition: all 0.3s ease;
+      }
+
+      .filter-overlay.open {
+        opacity: 1;
+        visibility: visible;
+      }
+
+      .filter-close-btn {
         display: block;
       }
     }
@@ -103,22 +168,35 @@
         <h1 id="shop-title" style="font-size:1.5rem;margin-bottom:0.25rem;">All Products</h1>
         <p class="text-muted" id="product-count" style="font-size:0.875rem;"></p>
       </div>
-      <div style="display:flex;gap:1rem;align-items:center;">
+      <div style="display:flex;gap:0.75rem;align-items:center;flex-wrap:wrap;">
         <button class="btn btn-outline btn-sm filter-toggle-btn" id="filter-toggle-btn">
-          ☰ Filters
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" style="margin-right: 0.35rem;">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Filters
         </button>
-        <select id="sort-select" class="form-control" style="width:auto;font-size:0.875rem;">
-          <option value="newest">Newest</option>
-          <option value="price_asc">Price: Low to High</option>
-          <option value="price_desc">Price: High to Low</option>
-        </select>
+        <div style="display:flex;align-items:center;gap:0.5rem;">
+          <label for="sort-select" class="sort-label">Sort by:</label>
+          <select id="sort-select" class="form-control"
+            style="width:auto;font-size:0.875rem;padding-top:0.4rem;padding-bottom:0.4rem;min-height:36px;">
+            <option value="newest">Newest</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+          </select>
+        </div>
       </div>
     </div>
 
     <div class="shop-layout">
+      <div class="filter-overlay" id="filter-overlay"></div>
+
       <!-- Sidebar Filters -->
       <aside class="filter-sidebar" id="filter-sidebar">
-        <div class="filter-title">Filters</div>
+        <div class="filter-header">
+          <div class="filter-title">Filters</div>
+          <button class="filter-close-btn" id="filter-close-btn" aria-label="Close filters">&times;</button>
+        </div>
 
         <div class="filter-group">
           <div
@@ -241,8 +319,19 @@
 
       // Mobile filter toggle
       document.getElementById('filter-toggle-btn').addEventListener('click', () => {
-        document.getElementById('filter-sidebar').classList.toggle('open');
+        document.getElementById('filter-sidebar').classList.add('open');
+        document.getElementById('filter-overlay').classList.add('open');
+        document.body.style.overflow = 'hidden';
       });
+
+      const closeFilters = () => {
+        document.getElementById('filter-sidebar').classList.remove('open');
+        document.getElementById('filter-overlay').classList.remove('open');
+        document.body.style.overflow = '';
+      };
+
+      document.getElementById('filter-close-btn').addEventListener('click', closeFilters);
+      document.getElementById('filter-overlay').addEventListener('click', closeFilters);
 
       // Set initial title from URL
       if (currentOptions.categorySlug && allCats) {

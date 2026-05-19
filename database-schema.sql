@@ -24,6 +24,7 @@ DROP TABLE IF EXISTS product_option_types CASCADE;
 DROP TABLE IF EXISTS product_media CASCADE;
 DROP TABLE IF EXISTS products CASCADE;
 DROP TABLE IF EXISTS categories CASCADE;
+DROP TABLE IF EXISTS brands CASCADE;
 DROP TABLE IF EXISTS addresses CASCADE;
 DROP TABLE IF EXISTS profiles CASCADE;
 DROP TABLE IF EXISTS settings CASCADE;
@@ -85,6 +86,15 @@ create table categories (
   created_at timestamptz default now()
 );
 
+-- Brands
+create table brands (
+  id uuid primary key default gen_random_uuid(),
+  name text not null,
+  slug text unique not null,
+  image_url text,
+  created_at timestamptz default now()
+);
+
 -- Products
 create table products (
   id uuid primary key default gen_random_uuid(),
@@ -97,7 +107,7 @@ create table products (
   stock_status text default 'in_stock' check (stock_status in ('in_stock','out_of_stock')),
   is_featured boolean default false,
   is_published boolean default true,
-  brand text,
+  brand_id uuid references brands(id) on delete set null,
   weight_grams numeric,
   length_cm numeric,
   width_cm numeric,
@@ -278,6 +288,7 @@ alter table reviews enable row level security;
 -- Enable RLS on public-read tables too (so policies are enforced)
 alter table products enable row level security;
 alter table categories enable row level security;
+alter table brands enable row level security;
 alter table settings enable row level security;
 alter table product_media enable row level security;
 alter table product_option_types enable row level security;
@@ -319,6 +330,7 @@ create policy "Logged-in users create reviews" on reviews for insert with check 
 -- Public read for store content
 create policy "Public read products" on products for select using (is_published = true);
 create policy "Public read categories" on categories for select using (true);
+create policy "Public read brands" on brands for select using (true);
 create policy "Public read blog" on blog_posts for select using (published_at is not null);
 create policy "Public read faqs" on faqs for select using (true);
 create policy "Public read settings" on settings for select using (true);
@@ -356,6 +368,9 @@ create policy "Admin manage products" on products for all using (
   exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_admin = true)
 );
 create policy "Admin manage categories" on categories for all using (
+  exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_admin = true)
+);
+create policy "Admin manage brands" on brands for all using (
   exists (select 1 from profiles where profiles.id = auth.uid() and profiles.is_admin = true)
 );
 create policy "Admin manage product_media" on product_media for all using (

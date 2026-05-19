@@ -17,6 +17,7 @@
         <a href="index.html">Dashboard</a>
         <a href="products.html" class="active">Products</a>
         <a href="categories.html">Categories</a>
+        <a href="brands.html">Brands</a>
         <a href="orders.html">Orders</a>
         <a href="coupons.html">Coupons</a>
         <a href="reviews.html">Reviews</a>
@@ -110,8 +111,15 @@
             </select>
           </div>
           <div class="form-group" style="flex:1;">
-            <label class="form-label">Brand</label>
-            <input type="text" id="prod-brand" class="form-control" placeholder="e.g. Samsung">
+            <label class="form-label" style="display:flex; justify-content:space-between;">
+              Brand
+              <a href="brands.html" target="_blank"
+                style="color:var(--color-accent);font-size:0.8rem;text-decoration:underline;">Manage Brands</a>
+            </label>
+            <select id="prod-brand" class="form-control">
+              <option value="">No Brand</option>
+              <!-- Brands loaded dynamically -->
+            </select>
           </div>
         </div>
 
@@ -272,6 +280,7 @@
       await initAuth();
       await checkAdmin();
       await loadCategories();
+      await loadBrands();
       await loadProducts();
 
       // Filters
@@ -354,9 +363,18 @@
       }
     }
 
+    async function loadBrands() {
+      const { data } = await supabase.from('brands').select('id, name').order('name');
+      if (data) {
+        const sel = document.getElementById('prod-brand');
+        const firstOpt = sel.firstElementChild ? sel.firstElementChild.outerHTML : '';
+        sel.innerHTML = firstOpt + data.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+      }
+    }
+
     async function loadProducts() {
       const { data } = await supabase.from('products')
-        .select('*, category:categories(name), media:product_media(url)')
+        .select('*, category:categories(name), brand:brands(name), media:product_media(url)')
         .order('created_at', { ascending: false });
 
       if (data) allProducts = data;
@@ -605,7 +623,7 @@
       document.getElementById('prod-price').value = p.price;
       document.getElementById('prod-compare').value = p.compare_price || '';
       document.getElementById('prod-category').value = p.category_id || '';
-      document.getElementById('prod-brand').value = p.brand || '';
+      document.getElementById('prod-brand').value = p.brand_id || '';
       document.getElementById('prod-weight').value = p.weight_grams || '';
       document.getElementById('prod-length').value = p.length_cm || '';
       document.getElementById('prod-width').value = p.width_cm || '';
@@ -718,7 +736,7 @@
           name: document.getElementById('prod-name').value,
           slug: document.getElementById('prod-slug').value,
           category_id: document.getElementById('prod-category').value || null,
-          brand: document.getElementById('prod-brand').value || null,
+          brand_id: document.getElementById('prod-brand').value || null,
           weight_grams: document.getElementById('prod-weight').value || null,
           length_cm: document.getElementById('prod-length').value || null,
           width_cm: document.getElementById('prod-width').value || null,

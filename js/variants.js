@@ -7,6 +7,7 @@ export async function fetchProductDetails(slug) {
     .select(`
       *,
       category:categories(name, slug),
+      brand:brands(name, slug),
       media:product_media(id, url, type, sort_order),
       details:product_details(*),
       option_types:product_option_types(*),
@@ -28,7 +29,7 @@ export async function fetchProductDetails(slug) {
       .select('*')
       .in('option_type_id', optionTypeIds)
       .order('sort_order', { ascending: true });
-      
+
     // Attach values to types
     product.option_types.forEach(ot => {
       ot.values = optionValues ? optionValues.filter(v => v.option_type_id === ot.id) : [];
@@ -40,10 +41,10 @@ export async function fetchProductDetails(slug) {
 
 export function findMatchingVariant(product, selectionState) {
   if (!product.variants || product.variants.length === 0) return null;
-  
+
   // selectionState format: { [optionTypeId]: selectedValueId }
   const selectedValueIds = Object.values(selectionState).sort().join(',');
-  
+
   return product.variants.find(v => {
     const variantValueIds = [...v.option_value_ids].sort().join(',');
     return variantValueIds === selectedValueIds;

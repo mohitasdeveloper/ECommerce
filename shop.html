@@ -210,6 +210,15 @@
         <div class="filter-group">
           <div
             style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">
+            Brand</div>
+          <div id="brand-filters">
+            <label><input type="radio" name="brand" value=""> All</label>
+          </div>
+        </div>
+
+        <div class="filter-group">
+          <div
+            style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">
             Availability</div>
           <label><input type="checkbox" id="in-stock-filter"> In Stock Only</label>
         </div>
@@ -244,6 +253,7 @@
     const params = new URLSearchParams(window.location.search);
     let currentOptions = {
       categorySlug: params.get('category') || '',
+      brandSlug: params.get('brand') || '',
       inStockOnly: false,
       sortBy: 'newest'
     };
@@ -303,6 +313,28 @@
             window.history.pushState({}, '', url);
             const titleEl = document.getElementById('shop-title');
             if (titleEl) titleEl.textContent = e.target.value ? allCats.find(c => c.slug === e.target.value)?.name || 'Products' : 'All Products';
+            loadProducts();
+          });
+        });
+      }
+
+      // Load brands for filter
+      const { data: allBrands } = await supabase.from('brands').select('*').order('name');
+      if (allBrands && allBrands.length > 0) {
+        const brandFiltersEl = document.getElementById('brand-filters');
+        brandFiltersEl.innerHTML = `<label><input type="radio" name="brand" value="" ${!currentOptions.brandSlug ? 'checked' : ''}> All</label>` +
+          allBrands.map(b => `<label><input type="radio" name="brand" value="${b.slug}" ${currentOptions.brandSlug === b.slug ? 'checked' : ''}> ${b.name}</label>`).join('');
+
+        brandFiltersEl.querySelectorAll('input[name="brand"]').forEach(r => {
+          r.addEventListener('change', e => {
+            currentOptions.brandSlug = e.target.value;
+            const url = new URL(window.location);
+            if (e.target.value) {
+              url.searchParams.set('brand', e.target.value);
+            } else {
+              url.searchParams.delete('brand');
+            }
+            window.history.pushState({}, '', url);
             loadProducts();
           });
         });

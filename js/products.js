@@ -11,6 +11,7 @@ export async function fetchProducts(options = {}) {
     .select(`
       *,
       category:categories(name, slug),
+      brand:brands(name, slug),
       media:product_media(url, type, sort_order)
     `)
     .eq('is_published', true);
@@ -31,6 +32,13 @@ export async function fetchProducts(options = {}) {
 
       // Filter for products in the selected category OR any of its children
       query = query.in('category_id', categoryIdsToFilter);
+    }
+  }
+
+  if (options.brandSlug) {
+    const { data: brandData } = await supabase.from('brands').select('id').eq('slug', options.brandSlug).single();
+    if (brandData) {
+      query = query.eq('brand_id', brandData.id);
     }
   }
 
@@ -84,6 +92,8 @@ export function renderProductCards(products, containerId) {
   container.innerHTML = products.map(product => {
     const isWished = isInWishlist(product.id);
 
+    const categoryText = [product.brand?.name, product.category?.name].filter(Boolean).join(' • ');
+
     return `
       <div class="product-card">
         <a href="./product.html?slug=${product.slug}" class="product-card-img-link">
@@ -95,7 +105,7 @@ export function renderProductCards(products, containerId) {
           </div>
         </a>
         <div class="product-card-info">
-          ${product.category ? `<div class="product-category">${product.category.name}</div>` : ''}
+          ${categoryText ? `<div class="product-category">${categoryText}</div>` : ''}
           <a href="./product.html?slug=${product.slug}"><h3 class="product-title">${product.name}</h3></a>
           <div class="d-flex align-center justify-between mt-4">
             <div>

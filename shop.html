@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,26 +9,91 @@
   <link rel="stylesheet" href="./css/main.css?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    .shop-layout { display: grid; grid-template-columns: 1fr; gap: 2rem; }
-    @media (min-width: 768px) { .shop-layout { grid-template-columns: 240px 1fr; } }
+    .shop-layout {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
 
-    .filter-sidebar { background: white; border: 1px solid var(--color-border); border-radius: var(--radius-lg); padding: 1.5rem; height: fit-content; position: sticky; top: 5rem; }
-    .filter-title { font-weight: 600; font-size: 1rem; margin-bottom: 1rem; }
-    .filter-group { margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--color-border); }
-    .filter-group:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .filter-group label { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; padding: 0.35rem 0; font-size: 0.9rem; }
+    @media (min-width: 768px) {
+      .shop-layout {
+        grid-template-columns: 240px 1fr;
+      }
+    }
+
+    .filter-sidebar {
+      background: white;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      height: fit-content;
+      position: sticky;
+      top: 5rem;
+    }
+
+    .filter-title {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    .filter-group {
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .filter-group:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .filter-group label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      cursor: pointer;
+      padding: 0.35rem 0;
+      font-size: 0.9rem;
+    }
+
     .filter-group input[type="radio"],
-    .filter-group input[type="checkbox"] { accent-color: var(--color-accent); width: 16px; height: 16px; }
+    .filter-group input[type="checkbox"] {
+      accent-color: var(--color-accent);
+      width: 16px;
+      height: 16px;
+    }
 
-    .shop-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem; }
-    .filter-toggle-btn { display: none; }
+    .shop-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .filter-toggle-btn {
+      display: none;
+    }
+
     @media (max-width: 767px) {
-      .filter-toggle-btn { display: inline-flex; }
-      .filter-sidebar { display: none; }
-      .filter-sidebar.open { display: block; }
+      .filter-toggle-btn {
+        display: inline-flex;
+      }
+
+      .filter-sidebar {
+        display: none;
+      }
+
+      .filter-sidebar.open {
+        display: block;
+      }
     }
   </style>
 </head>
+
 <body>
   <div id="header-placeholder"></div>
 
@@ -55,14 +121,18 @@
         <div class="filter-title">Filters</div>
 
         <div class="filter-group">
-          <div style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">Category</div>
+          <div
+            style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">
+            Category</div>
           <div id="category-filters">
             <label><input type="radio" name="category" value=""> All</label>
           </div>
         </div>
 
         <div class="filter-group">
-          <div style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">Availability</div>
+          <div
+            style="font-size:0.8rem;font-weight:600;text-transform:uppercase;letter-spacing:0.08em;color:var(--color-text-muted);margin-bottom:0.75rem;">
+            Availability</div>
           <label><input type="checkbox" id="in-stock-filter"> In Stock Only</label>
         </div>
       </aside>
@@ -112,17 +182,49 @@
       await initPage();
 
       // Load categories for filter
-      const { data: cats } = await supabase.from('categories').select('*').order('sort_order');
-      if (cats) {
+      const { data: allCats } = await supabase.from('categories').select('*').order('sort_order');
+      if (allCats) {
         const filtersEl = document.getElementById('category-filters');
-        filtersEl.innerHTML = `<label><input type="radio" name="category" value="" ${!currentOptions.categorySlug ? 'checked' : ''}> All</label>` +
-          cats.map(c => `<label><input type="radio" name="category" value="${c.slug}" ${currentOptions.categorySlug === c.slug ? 'checked' : ''}> ${c.name}</label>`).join('');
+
+        const parentCategories = allCats.filter(c => !c.parent_id);
+
+        const filtersHtml = [
+          `<label><input type="radio" name="category" value="" ${!currentOptions.categorySlug ? 'checked' : ''}> All</label>`,
+          ...parentCategories.map(p => {
+            const children = allCats.filter(s => s.parent_id === p.id);
+            let parentHtml = `<div class="category-group" style="margin-top: 0.75rem;">
+              <label style="font-weight: 600;">
+                <input type="radio" name="category" value="${p.slug}" ${currentOptions.categorySlug === p.slug ? 'checked' : ''}> ${p.name}
+              </label>`;
+
+            if (children.length > 0) {
+              parentHtml += `<div style="padding-left: 1.5rem; margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.35rem;">
+                ${children.map(c => `
+                  <label>
+                    <input type="radio" name="category" value="${c.slug}" ${currentOptions.categorySlug === c.slug ? 'checked' : ''}> ${c.name}
+                  </label>
+                `).join('')}
+              </div>`;
+            }
+            parentHtml += `</div>`;
+            return parentHtml;
+          })
+        ].join('');
+
+        filtersEl.innerHTML = filtersHtml;
 
         filtersEl.querySelectorAll('input[name="category"]').forEach(r => {
           r.addEventListener('change', e => {
             currentOptions.categorySlug = e.target.value;
+            const url = new URL(window.location);
+            if (e.target.value) {
+              url.searchParams.set('category', e.target.value);
+            } else {
+              url.searchParams.delete('category');
+            }
+            window.history.pushState({}, '', url);
             const titleEl = document.getElementById('shop-title');
-            if (titleEl) titleEl.textContent = e.target.value ? cats.find(c => c.slug === e.target.value)?.name || 'Products' : 'All Products';
+            if (titleEl) titleEl.textContent = e.target.value ? allCats.find(c => c.slug === e.target.value)?.name || 'Products' : 'All Products';
             loadProducts();
           });
         });
@@ -143,8 +245,8 @@
       });
 
       // Set initial title from URL
-      if (currentOptions.categorySlug && cats) {
-        const cat = cats.find(c => c.slug === currentOptions.categorySlug);
+      if (currentOptions.categorySlug && allCats) {
+        const cat = allCats.find(c => c.slug === currentOptions.categorySlug);
         if (cat) document.getElementById('shop-title').textContent = cat.name;
       }
 
@@ -154,4 +256,5 @@
     init();
   </script>
 </body>
+
 </html>

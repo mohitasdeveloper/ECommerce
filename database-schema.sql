@@ -79,6 +79,7 @@ create table categories (
   id uuid primary key default gen_random_uuid(),
   name text not null,
   slug text unique not null,
+  parent_id uuid references categories(id) on delete cascade,
   image_url text,
   sort_order int default 0,
   created_at timestamptz default now()
@@ -402,3 +403,8 @@ insert into categories (name, slug, image_url, sort_order) values
   ('Clothing', 'clothing', null, 2),
   ('Footwear', 'footwear', null, 3),
   ('Accessories', 'accessories', null, 4);
+
+insert into categories (name, slug, parent_id, sort_order) values
+  ('Mobile Phones', 'mobile-phones', (select id from categories where slug = 'electronics'), 1),
+  ('Laptops', 'laptops', (select id from categories where slug = 'electronics'), 2),
+  ('T-Shirts', 't-shirts', (select id from categories where slug = 'clothing'), 1);

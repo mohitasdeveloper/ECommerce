@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
@@ -8,6 +9,7 @@
   <link rel="stylesheet" href="./css/main.css?v=2">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
+
 <body>
 
   <!-- Header injected by JS -->
@@ -67,19 +69,19 @@
       renderProductCards(products.slice(0, 4), 'featured-products');
 
       // Categories
-      const { data: cats } = await supabase.from('categories').select('*').order('sort_order');
+      const { data: cats } = await supabase.from('categories').select('*').is('parent_id', null).order('sort_order');
       const CATEGORY_EMOJIS = { electronics: '⚡', clothing: '👕', footwear: '👟', accessories: '⌚' };
       if (cats && cats.length > 0) {
         // Need dynamic import since we're in a module block inside HTML
         const { optimizeCloudinaryUrl } = await import('./js/cloudinary.js');
-        
+
         document.getElementById('category-grid').innerHTML = cats.map(c => `
           <a href="./shop.html?category=${c.slug}" class="category-card">
             <div class="category-img" style="background:linear-gradient(135deg,#e0e7ff,#f0fdf4)">
               ${c.image_url
-                ? `<img src="${optimizeCloudinaryUrl(c.image_url, 400)}" alt="${c.name}" loading="lazy">`
-                : `<span style="font-size:3rem;">${CATEGORY_EMOJIS[c.slug] || '📦'}</span>`
-              }
+            ? `<img src="${optimizeCloudinaryUrl(c.image_url, 400)}" alt="${c.name}" loading="lazy">`
+            : `<span style="font-size:3rem;">${CATEGORY_EMOJIS[c.slug] || '📦'}</span>`
+          }
             </div>
             <div class="category-name">${c.name}</div>
           </a>
@@ -90,4 +92,5 @@
     init();
   </script>
 </body>
+
 </html>

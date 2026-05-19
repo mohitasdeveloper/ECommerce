@@ -18,11 +18,19 @@ export async function fetchProducts(options = {}) {
   if (options.featuredOnly) {
     query = query.eq('is_featured', true);
   }
-  
+
   if (options.categorySlug) {
-    const { data: catData } = await supabase.from('categories').select('id').eq('slug', options.categorySlug).single();
-    if (catData) {
-      query = query.eq('category_id', catData.id);
+    // Fetch all categories to determine hierarchy
+    const { data: allCats } = await supabase.from('categories').select('id, slug, parent_id');
+    const selectedCat = allCats?.find(c => c.slug === options.categorySlug);
+
+    if (selectedCat) {
+      // Find all direct children of the selected category
+      const childCats = allCats.filter(c => c.parent_id === selectedCat.id);
+      const categoryIdsToFilter = [selectedCat.id, ...childCats.map(c => c.id)];
+
+      // Filter for products in the selected category OR any of its children
+      query = query.in('category_id', categoryIdsToFilter);
     }
   }
 
@@ -40,7 +48,7 @@ export async function fetchProducts(options = {}) {
   }
 
   const { data, error } = await query;
-  
+
   if (error) {
     console.error('Error fetching products:', error);
     return [];
@@ -49,17 +57,17 @@ export async function fetchProducts(options = {}) {
   // Process media to get main image
   if (!data) return [];
   return data.map(product => {
-    let mainRaw = product.media && product.media.length > 0 
-      ? product.media.sort((a,b) => a.sort_order - b.sort_order)[0].url 
+    let mainRaw = product.media && product.media.length > 0
+      ? product.media.sort((a, b) => a.sort_order - b.sort_order)[0].url
       : 'https://placehold.co/400x500?text=No+Image'; // Fallback
-      
+
     let hoverRaw = product.media && product.media.length > 1
-      ? product.media.sort((a,b) => a.sort_order - b.sort_order)[1].url
+      ? product.media.sort((a, b) => a.sort_order - b.sort_order)[1].url
       : mainRaw;
 
     product.main_image_url = optimizeCloudinaryUrl(mainRaw, 400);
     product.hover_image_url = optimizeCloudinaryUrl(hoverRaw, 400);
-      
+
     return product;
   });
 }
@@ -67,7 +75,7 @@ export async function fetchProducts(options = {}) {
 export function renderProductCards(products, containerId) {
   const container = document.getElementById(containerId);
   if (!container) return;
-  
+
   if (products.length === 0) {
     container.innerHTML = '<div class="col-span-full text-center py-8 text-muted">No products found.</div>';
     return;
@@ -75,7 +83,7 @@ export function renderProductCards(products, containerId) {
 
   container.innerHTML = products.map(product => {
     const isWished = isInWishlist(product.id);
-    
+
     return `
       <div class="product-card">
         <a href="./product.html?slug=${product.slug}" class="product-card-img-link">
@@ -94,10 +102,10 @@ export function renderProductCards(products, containerId) {
               <span class="product-price">₹${product.price}</span>
               ${product.compare_price && product.compare_price > product.price ? `<span class="compare-price">₹${product.compare_price}</span>` : ''}
             </div>
-            ${product.stock_status === 'out_of_stock' 
-              ? `<span style="font-size:0.78rem; color:var(--color-danger); font-weight:600;">Out of Stock</span>`
-              : ``
-            }
+            ${product.stock_status === 'out_of_stock'
+        ? `<span style="font-size:0.78rem; color:var(--color-danger); font-weight:600;">Out of Stock</span>`
+        : ``
+      }
           </div>
         </div>
       </div>
